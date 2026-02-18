@@ -33,8 +33,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/vendor/echarts', express.static(path.join(__dirname, 'node_modules', 'echarts', 'dist')));
 const globalLimiter = createLimiter('global');
 app.use((req, res, next) => {
-    if (req.path.startsWith('/auth')) return next();
+    if (req.path.startsWith('/auth') || req.path === '/up') return next();
     return globalLimiter(req, res, next);
+});
+
+app.get('/up', (req, res) => {
+    return res.status(200).json({ ok: true, status: 'UP', timestamp: new Date().toISOString() });
 });
 
 app.use('/', require('./routes/index'));
