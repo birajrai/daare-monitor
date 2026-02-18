@@ -7,6 +7,7 @@
   <main class="container">
     <section class="card">
       <h1>Create Monitor</h1>
+      <p class="meta">Configure a new check target and interval.</p>
       <form method="post" action="/admin/create" class="form">
         <label>Name<input required name="name" maxlength="120"></label>
         <label>Slug<input required name="slug" pattern="[a-z0-9-]{1,100}" placeholder="example-api"></label>
@@ -27,5 +28,9 @@
       </form>
     </section>
   </main>
+  <%- include('partials/footer') %>
 </body>
 </html>
+
+
+

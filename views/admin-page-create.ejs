@@ -7,6 +7,7 @@
   <main class="container">
     <section class="card">
       <h1>Create Status Page</h1>
+      <p class="meta">Pick the monitors you want to publish for users.</p>
       <form method="post" action="/admin/pages/create" class="form">
         <label>Title<input required name="title" maxlength="120"></label>
         <label>Slug<input required name="slug" pattern="[a-z0-9-]{1,100}" placeholder="public-status"></label>
@@ -29,5 +30,9 @@
       </form>
     </section>
   </main>
+  <%- include('partials/footer') %>
 </body>
 </html>
+
+
+

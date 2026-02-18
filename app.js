@@ -21,6 +21,10 @@ app.set('views', path.join(__dirname, 'views'));
 app.disable('x-powered-by');
 
 app.use(requestNonce);
+app.use((req, res, next) => {
+    res.locals.currentPath = req.path;
+    next();
+});
 app.use(createSecurityMiddleware(config));
 
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));

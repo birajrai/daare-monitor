@@ -7,6 +7,7 @@
   <main class="container">
     <section class="card">
       <h1>Edit Status Page: <%= page.title %></h1>
+      <p class="meta">Change page metadata and monitor visibility.</p>
       <form method="post" action="/admin/pages/<%= page.slug %>/edit" class="form">
         <label>Title<input required name="title" maxlength="120" value="<%= page.title %>"></label>
         <label>Slug<input required name="slug" pattern="[a-z0-9-]{1,100}" value="<%= page.slug %>"></label>
@@ -29,5 +30,9 @@
       </form>
     </section>
   </main>
+  <%- include('partials/footer') %>
 </body>
 </html>
+
+
+

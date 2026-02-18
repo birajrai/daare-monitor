@@ -1,9 +1,10 @@
 <header class="topbar">
   <div class="container row-between">
-    <a href="/" class="brand">DAARE MONITOR</a>
+    <a href="/" class="brand">Daare Monitor</a>
     <nav class="nav">
-      <a href="/">Dashboard</a>
-      <a href="/admin">Admin</a>
+      <a class="nav-link <%= currentPath === '/' ? 'active' : '' %>" href="/">Dashboard</a>
+      <a class="nav-link <%= currentPath.startsWith('/admin/pages') || currentPath.startsWith('/status-page') ? 'active' : '' %>" href="/admin/pages">Status Pages</a>
+      <a class="nav-link <%= currentPath.startsWith('/admin') ? 'active' : '' %>" href="/admin">Admin</a>
     </nav>
   </div>
 </header>
