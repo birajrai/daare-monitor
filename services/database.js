@@ -32,6 +32,17 @@ function all(sql, params = []) {
   });
 }
 
+async function hasColumn(tableName, columnName) {
+  const columns = await all(`PRAGMA table_info(${tableName})`);
+  return columns.some((col) => col.name === columnName);
+}
+
+async function ensureColumn(tableName, columnName, definitionSql) {
+  const exists = await hasColumn(tableName, columnName);
+  if (exists) return;
+  await run(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definitionSql}`);
+}
+
 async function init() {
   const dbDir = path.dirname(config.database.path);
   if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
@@ -50,10 +61,14 @@ async function init() {
       name TEXT NOT NULL,
       slug TEXT UNIQUE NOT NULL,
       url TEXT NOT NULL,
+      monitor_type TEXT NOT NULL DEFAULT 'http',
       interval INTEGER NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  await ensureColumn('monitors', 'monitor_type', "TEXT NOT NULL DEFAULT 'http'");
+  await run("UPDATE monitors SET monitor_type = 'http' WHERE monitor_type IS NULL OR monitor_type = ''");
 
   await run(`
     CREATE INDEX IF NOT EXISTS idx_monitors_created_at

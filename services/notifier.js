@@ -2,13 +2,6 @@ const axios = require('axios');
 const nodemailer = require('nodemailer');
 const config = require('../config');
 
-const monitorHttp = axios.create({
-  timeout: config.monitoring.timeoutMs,
-  maxRedirects: config.monitoring.maxRedirects,
-  maxContentLength: config.monitoring.maxContentLengthBytes,
-  validateStatus: () => true,
-});
-
 const discordHttp = axios.create({ timeout: 5000, validateStatus: () => true });
 
 const transporter = config.notifications.email.enabled
@@ -60,7 +53,6 @@ async function sendEmailStateChange(monitor, status, responseTime) {
 }
 
 module.exports = {
-  monitorHttp,
   sendDiscordStateChange,
   sendEmailStateChange,
 };

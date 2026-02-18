@@ -21,11 +21,8 @@ const addColumn = (columnName, columnType) => {
 
 (async () => {
     try {
-        console.log('Adding last_checked_at column...');
-        await addColumn('last_checked_at', 'DATETIME DEFAULT NULL');
-
-        console.log('Adding update_interval column...');
-        await addColumn('update_interval', 'INTEGER DEFAULT 60000');
+        console.log('Adding monitor_type column...');
+        await addColumn('monitor_type', "TEXT NOT NULL DEFAULT 'http'");
 
         console.log('Database schema updated successfully.');
     } catch (err) {

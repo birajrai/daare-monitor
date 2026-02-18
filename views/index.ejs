@@ -12,7 +12,8 @@
           <thead>
             <tr>
               <th>Name</th>
-              <th>URL</th>
+              <th>Type</th>
+              <th>Target</th>
               <th>Status</th>
               <th>Uptime</th>
               <th>Response</th>
@@ -23,12 +24,13 @@
           <tbody>
             <% if (monitors.length === 0) { %>
               <tr>
-                <td colspan="7">No monitors configured.</td>
+                <td colspan="8">No monitors configured.</td>
               </tr>
             <% } %>
             <% monitors.forEach((m) => { %>
               <tr>
                 <td><a href="/status/<%= m.slug %>"><%= m.name %></a></td>
+                <td><%= (m.monitor_type || 'http').toUpperCase() %></td>
                 <td class="url"><%= m.url %></td>
                 <td>
                   <span class="badge <%= m.current_status === 'UP' ? 'up' : (m.current_status === 'DOWN' ? 'down' : 'unknown') %>">

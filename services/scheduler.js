@@ -3,6 +3,7 @@ const net = require('net');
 const config = require('../config');
 const db = require('./database');
 const notifier = require('./notifier');
+const monitorChecks = require('./monitor-checks');
 
 const monitorQueue = new Map();
 const runningSlugs = new Set();
@@ -39,6 +40,30 @@ function isPrivateIPv6(ip) {
     return false;
 }
 
+function extractHostname(monitor) {
+    const type = String(monitor.monitor_type || 'http');
+    const target = String(monitor.url || '');
+
+    if (type === 'http') {
+        try {
+            return new URL(target).hostname;
+        } catch {
+            return null;
+        }
+    }
+
+    if (type === 'tcp' || type === 'minecraft') {
+        const [host] = target.split(':');
+        return host || null;
+    }
+
+    if (type === 'ping') {
+        return target || null;
+    }
+
+    return null;
+}
+
 async function hostResolvesToPrivateAddress(hostname) {
     const cached = hostSafetyCache.get(hostname);
     if (cached && cached.expiresAt > Date.now()) return cached.isPrivate;
@@ -62,7 +87,7 @@ async function hostResolvesToPrivateAddress(hostname) {
 }
 
 async function syncMonitorsFromDb() {
-    const rows = await db.all('SELECT id, name, slug, url, interval FROM monitors');
+    const rows = await db.all('SELECT id, name, slug, url, monitor_type, interval FROM monitors');
     const seen = new Set();
 
     for (const row of rows) {
@@ -82,14 +107,16 @@ async function syncMonitorsFromDb() {
         const intervalChanged = existing.interval !== intervalMs;
         const urlChanged = existing.url !== row.url;
         const nameChanged = existing.name !== row.name;
+        const typeChanged = existing.monitor_type !== row.monitor_type;
 
         existing.name = row.name;
         existing.url = row.url;
+        existing.monitor_type = row.monitor_type;
         existing.interval = intervalMs;
 
         if (intervalChanged) {
             existing.nextRun = Date.now() + randomJitter(Math.min(intervalMs, 1000));
-        } else if (urlChanged || nameChanged) {
+        } else if (urlChanged || nameChanged || typeChanged) {
             existing.nextRun = Math.min(existing.nextRun, Date.now() + 1000);
         }
     }
@@ -121,15 +148,16 @@ async function checkMonitor(monitor) {
 
     try {
         if (config.monitoring.blockPrivateIps) {
-            const parsed = new URL(monitor.url);
-            const blocked = await hostResolvesToPrivateAddress(parsed.hostname);
+            const hostname = extractHostname(monitor);
+            if (!hostname) throw new Error('Invalid monitor target');
+            const blocked = await hostResolvesToPrivateAddress(hostname);
             if (blocked) throw new Error('Blocked private IP target');
         }
 
-        const res = await notifier.monitorHttp.get(monitor.url);
-        statusCode = res.status;
-        responseTime = Date.now() - start;
-        currentStatus = res.status < 400 ? 'UP' : 'DOWN';
+        const result = await monitorChecks.runCheck(monitor);
+        currentStatus = result.currentStatus;
+        responseTime = result.responseTime;
+        statusCode = result.statusCode;
     } catch {
         currentStatus = 'DOWN';
         responseTime = Date.now() - start;
