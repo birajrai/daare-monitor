@@ -4,13 +4,11 @@ const db = require('./database');
 const settings = require('./settings');
 const notifier = require('./notifier');
 const monitorChecks = require('./monitor-checks');
-const checkResultsBuffer = require('./check-results-buffer');
 
 const monitorQueue = new Map();
 const runningSlugs = new Set();
 
 let loopTimer = null;
-let flushTimer = null;
 let isRunning = false;
 let activeWorkers = 0;
 let lastSyncAt = 0;
@@ -18,8 +16,6 @@ let nextCleanupAt = Date.now() + 30_000;
 
 const hostSafetyCache = new Map();
 const HOST_CACHE_TTL_MS = 5 * 60 * 1000;
-const BUFFER_FLUSH_INTERVAL_MS = 10 * 60 * 1000;
-const stateCache = new Map();
 
 function randomJitter(maxMs) {
     return Math.floor(Math.random() * Math.max(1, maxMs));
@@ -149,19 +145,6 @@ async function syncMonitorsFromDb() {
     }
 }
 
-async function syncStateCacheFromDb() {
-    const rows = await db.all('SELECT slug, current_status, uptime_count, downtime_count, last_checked FROM monitors_state');
-    stateCache.clear();
-    for (const row of rows) {
-        stateCache.set(row.slug, {
-            current_status: row.current_status,
-            uptime_count: Number(row.uptime_count || 0),
-            downtime_count: Number(row.downtime_count || 0),
-            last_checked: row.last_checked || null,
-        });
-    }
-}
-
 async function cleanupOldStatusRows() {
     const appSettings = settings.getCachedSettings();
     await db.run("DELETE FROM monitors_status WHERE checked_at < NOW() - (?::int * INTERVAL '1 day')", [
@@ -203,26 +186,35 @@ async function checkMonitor(monitor) {
     }
 
     try {
-        const previousState = stateCache.get(monitor.slug) || null;
+        await db.run('INSERT INTO monitors_status (slug, status, response_time, status_code, details_json) VALUES (?, ?, ?, ?, ?)', [
+            monitor.slug,
+            currentStatus,
+            responseTime,
+            statusCode,
+            detailsJson,
+        ]);
+
+        const previousState = await db.get('SELECT * FROM monitors_state WHERE slug = ?', [monitor.slug]);
         const isUp = currentStatus === 'UP' ? 1 : 0;
         const isDown = currentStatus === 'DOWN' ? 1 : 0;
-        const checkedAt = new Date().toISOString();
 
         if (!previousState) {
-            stateCache.set(monitor.slug, {
-                current_status: currentStatus,
-                last_checked: checkedAt,
-                uptime_count: isUp,
-                downtime_count: isDown,
-            });
+            await db.run(
+                `INSERT INTO monitors_state (slug, current_status, last_checked, uptime_count, downtime_count)
+         VALUES (?, ?, CURRENT_TIMESTAMP, ?, ?)`,
+                [monitor.slug, currentStatus, isUp, isDown],
+            );
         } else {
             const stateChanged = previousState.current_status !== currentStatus;
-            stateCache.set(monitor.slug, {
-                current_status: currentStatus,
-                last_checked: checkedAt,
-                uptime_count: Number(previousState.uptime_count || 0) + isUp,
-                downtime_count: Number(previousState.downtime_count || 0) + isDown,
-            });
+            await db.run(
+                `UPDATE monitors_state
+         SET current_status = ?,
+             last_checked = CURRENT_TIMESTAMP,
+             uptime_count = uptime_count + ?,
+             downtime_count = downtime_count + ?
+         WHERE slug = ?`,
+                [currentStatus, isUp, isDown, monitor.slug],
+            );
 
             if (stateChanged) {
                 await Promise.allSettled([
@@ -231,15 +223,6 @@ async function checkMonitor(monitor) {
                 ]);
             }
         }
-
-        checkResultsBuffer.appendResult({
-            slug: monitor.slug,
-            status: currentStatus,
-            responseTime,
-            statusCode,
-            detailsJson,
-            checkedAt,
-        });
     } catch (err) {
         console.error(`Monitor check persistence failed for ${monitor.slug}:`, err.message);
     } finally {
@@ -287,13 +270,7 @@ function start() {
     isRunning = true;
     lastSyncAt = 0;
     const appSettings = settings.getCachedSettings();
-    void syncStateCacheFromDb();
     loopTimer = setTimeout(schedulerTick, appSettings.monitoring.schedulerTickMs);
-    flushTimer = setInterval(() => {
-        void checkResultsBuffer.flushToDb().catch((err) => {
-            console.error('Buffered DB flush failed:', err.message);
-        });
-    }, BUFFER_FLUSH_INTERVAL_MS);
 }
 
 async function refreshMonitorNow(slug) {
@@ -321,14 +298,7 @@ async function refreshAllNow() {
 async function stop() {
     isRunning = false;
     if (loopTimer) clearTimeout(loopTimer);
-    if (flushTimer) clearInterval(flushTimer);
     loopTimer = null;
-    flushTimer = null;
-    await checkResultsBuffer.flushToDb();
-}
-
-async function flushBufferedResults() {
-    await checkResultsBuffer.flushToDb();
 }
 
 module.exports = {
@@ -336,5 +306,4 @@ module.exports = {
     stop,
     refreshMonitorNow,
     refreshAllNow,
-    flushBufferedResults,
 };

@@ -39,15 +39,6 @@ router.get('/settings', async (req, res, next) => {
   }
 });
 
-router.post('/settings/update-db', async (req, res, next) => {
-  try {
-    await scheduler.flushBufferedResults();
-    return res.redirect('/admin/settings');
-  } catch (err) {
-    return next(err);
-  }
-});
-
 router.post('/settings', async (req, res, next) => {
   try {
     const body = req.body || {};
