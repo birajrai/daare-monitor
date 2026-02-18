@@ -48,8 +48,6 @@ router.get('/:slug', async (req, res, next) => {
             statusCode: row.status_code,
         }));
 
-        // removed debug logging
-
         const now = new Date();
         const lastUpdate = monitor && monitor.last_checked_at ? new Date(monitor.last_checked_at) : null;
         const intervalMs =
