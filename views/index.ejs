@@ -21,49 +21,55 @@
     </section>
 
     <section class="card">
-      <h1>Monitors</h1>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Target</th>
-              <th>Status</th>
-              <th>Uptime</th>
-              <th>Response</th>
-              <th>Details</th>
-              <th>Last Checked</th>
-              <th>Interval</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% if (monitors.length === 0) { %>
-              <tr>
-                <td colspan="9">No monitors configured.</td>
-              </tr>
-            <% } %>
-            <% monitors.forEach((m) => { %>
-              <tr>
-                <td><a href="/status/<%= m.slug %>"><%= m.name %></a></td>
-                <td><%= (m.monitor_type || 'http').toUpperCase() %></td>
-                <td class="url"><%= m.url %></td>
-                <td>
-                  <span class="badge <%= m.current_status === 'UP' ? 'up' : (m.current_status === 'DOWN' ? 'down' : 'unknown') %>">
-                    <%= m.current_status %>
-                  </span>
-                </td>
-                <td><%= m.uptimePercent %>%</td>
-                <td><%= m.response_time ?? 'N/A' %>ms</td>
-                <td><%= m.detailsSummary %></td>
-                <td><%= m.last_checked || 'Never' %></td>
-                <td><%= m.intervalSeconds %>s</td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
+      <h1>Stats (Last 24 Hours)</h1>
+      <div id="stats-chart" class="chart"></div>
     </section>
   </main>
+
+  <script src="/vendor/echarts/echarts.min.js"></script>
+  <script nonce="<%= nonce %>">
+    const trend = <%- JSON.stringify(trend) %>;
+    const chartEl = document.getElementById('stats-chart');
+
+    if (!trend.length || typeof echarts === 'undefined') {
+      chartEl.innerHTML = '<p class="empty-chart">No stats data yet. Wait for checks to run.</p>';
+    } else {
+      const labels = trend.map((point) => new Date(point.time.replace(' ', 'T')).toLocaleTimeString());
+      const upSeries = trend.map((point) => point.up);
+      const downSeries = trend.map((point) => point.down);
+      const totalSeries = trend.map((point) => point.total);
+      const chart = echarts.init(chartEl);
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { left: 40, right: 20, top: 30, bottom: 30 },
+        tooltip: { trigger: 'axis' },
+        legend: {
+          data: ['Up Checks', 'Down Checks', 'Total Checks'],
+          textStyle: { color: '#8b949e' },
+          top: 0,
+        },
+        xAxis: {
+          type: 'category',
+          data: labels,
+          axisLabel: { color: '#8b949e', hideOverlap: true },
+          axisLine: { lineStyle: { color: '#30363d' } },
+        },
+        yAxis: {
+          type: 'value',
+          min: 0,
+          axisLabel: { color: '#8b949e' },
+          splitLine: { lineStyle: { color: '#30363d' } },
+        },
+        series: [
+          { name: 'Up Checks', type: 'line', smooth: true, symbol: 'none', data: upSeries, lineStyle: { width: 2, color: '#00ff88' } },
+          { name: 'Down Checks', type: 'line', smooth: true, symbol: 'none', data: downSeries, lineStyle: { width: 2, color: '#ff4d4f' } },
+          { name: 'Total Checks', type: 'line', smooth: true, symbol: 'none', data: totalSeries, lineStyle: { width: 2, color: '#1f6feb' } },
+        ],
+      });
+
+      window.addEventListener('resize', () => chart.resize());
+    }
+  </script>
 </body>
 </html>

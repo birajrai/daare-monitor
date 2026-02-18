@@ -1,22 +1,41 @@
 const express = require('express');
 const db = require('../services/database');
-const { formatMonitorRows } = require('../utils/monitor-view');
-const queries = require('../queries/monitor-queries');
 
 const router = express.Router();
 
 router.get('/', async (req, res, next) => {
   try {
-    const monitors = await db.all(queries.dashboardMonitors);
+    const states = await db.all(
+      `SELECT COALESCE(current_status, 'UNKNOWN') AS current_status
+       FROM monitors_state`
+    );
 
-    const rows = formatMonitorRows(monitors);
     const stats = {
-      total: rows.length,
-      up: rows.filter((m) => m.current_status === 'UP').length,
-      down: rows.filter((m) => m.current_status === 'DOWN').length,
+      total: states.length,
+      up: states.filter((m) => m.current_status === 'UP').length,
+      down: states.filter((m) => m.current_status === 'DOWN').length,
     };
 
-    res.render('index', { title: 'Monitor Dashboard', monitors: rows, stats });
+    const trendRows = await db.all(
+      `SELECT
+         strftime('%Y-%m-%d %H:%M', checked_at) AS bucket,
+         SUM(CASE WHEN status = 'UP' THEN 1 ELSE 0 END) AS up_checks,
+         SUM(CASE WHEN status = 'DOWN' THEN 1 ELSE 0 END) AS down_checks,
+         COUNT(*) AS total_checks
+       FROM monitors_status
+       WHERE checked_at >= datetime('now', '-24 hours')
+       GROUP BY bucket
+       ORDER BY bucket ASC`
+    );
+
+    const trend = trendRows.map((row) => ({
+      time: row.bucket,
+      up: Number(row.up_checks || 0),
+      down: Number(row.down_checks || 0),
+      total: Number(row.total_checks || 0),
+    }));
+
+    res.render('index', { title: 'Monitor Dashboard', stats, trend, nonce: res.locals.nonce });
   } catch (err) {
     next(err);
   }
