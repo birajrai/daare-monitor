@@ -27,6 +27,7 @@
               <th>Name</th>
               <th>Slug</th>
               <th>Type</th>
+              <th>Visibility</th>
               <th>Status URL</th>
               <th>Status</th>
               <th>Uptime</th>
@@ -36,13 +37,18 @@
           </thead>
           <tbody>
             <% if (monitors.length === 0) { %>
-              <tr><td colspan="8">No monitors configured.</td></tr>
+              <tr><td colspan="9">No monitors configured.</td></tr>
             <% } %>
             <% monitors.forEach((m) => { %>
               <tr>
                 <td><%= m.name %></td>
                 <td><%= m.slug %></td>
                 <td><%= (m.monitor_type || 'http').toUpperCase() %></td>
+                <td>
+                  <% if (m.hide_url) { %><span class="badge unknown">URL Hidden</span><% } %>
+                  <% if (m.lock_enabled) { %><span class="badge down">Locked</span><% } %>
+                  <% if (!m.hide_url && !m.lock_enabled) { %><span class="badge up">Public</span><% } %>
+                </td>
                 <td><a href="/status/<%= m.slug %>" target="_blank" rel="noopener">/status/<%= m.slug %></a></td>
                 <td><span class="badge <%= m.current_status === 'UP' ? 'up' : (m.current_status === 'DOWN' ? 'down' : 'unknown') %>"><%= m.current_status %></span></td>
                 <td><%= m.uptimePercent %>%</td>

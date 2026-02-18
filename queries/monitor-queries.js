@@ -3,6 +3,7 @@ const dashboardMonitors = `SELECT
   m.slug,
   m.url,
   m.hide_url,
+  m.lock_enabled,
   m.monitor_type,
   m.interval,
   ms.current_status,
@@ -34,19 +35,19 @@ FROM monitors m
 LEFT JOIN monitors_state ms ON ms.slug = m.slug
 ORDER BY m.created_at DESC`;
 
-const adminMonitors = `SELECT m.name, m.slug, m.url, m.hide_url, m.monitor_type, m.interval,
+const adminMonitors = `SELECT m.name, m.slug, m.url, m.hide_url, m.lock_enabled, m.monitor_type, m.interval,
   COALESCE(s.current_status, 'UNKNOWN') AS current_status,
   s.last_checked, s.uptime_count, s.downtime_count
 FROM monitors m
 LEFT JOIN monitors_state s ON s.slug = m.slug
 ORDER BY m.created_at DESC`;
 
-const monitorBySlug = `SELECT m.name, m.slug, m.url, m.hide_url, m.monitor_type, m.interval AS update_interval, s.last_checked AS last_checked_at
+const monitorBySlug = `SELECT m.name, m.slug, m.url, m.hide_url, m.lock_enabled, m.lock_password_hash, m.monitor_type, m.interval AS update_interval, s.last_checked AS last_checked_at
 FROM monitors m
 LEFT JOIN monitors_state s ON s.slug = m.slug
 WHERE m.slug = ?`;
 
-const adminMonitorBySlug = `SELECT m.name, m.slug, m.url, m.hide_url, m.monitor_type, m.interval
+const adminMonitorBySlug = `SELECT m.name, m.slug, m.url, m.hide_url, m.lock_enabled, m.monitor_type, m.interval
 FROM monitors m
 WHERE m.slug = ?`;
 

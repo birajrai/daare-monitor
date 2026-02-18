@@ -28,6 +28,8 @@
         </label>
         <label>Target<input required name="url" value="<%= monitor.url %>"></label>
         <label><input type="checkbox" name="hide_url" <%= monitor.hide_url ? 'checked' : '' %>> Hide target URL on public status views</label>
+        <label><input type="checkbox" name="lock_enabled" <%= monitor.lock_enabled ? 'checked' : '' %>> Enable password lock for public status page</label>
+        <label>Lock password <input type="password" name="lock_password" minlength="4" placeholder="Leave blank to keep current password"></label>
         <label>Interval (seconds)<input required type="number" name="interval_seconds" min="10" max="3600" value="<%= monitor.intervalSeconds %>"></label>
         <div class="action-row">
           <button type="submit">Save Changes</button>

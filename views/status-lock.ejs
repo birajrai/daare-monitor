@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<%- include('partials/head') %>
+<body>
+  <%- include('partials/topbar') %>
+  <main class="container">
+    <section class="card auth-card">
+      <div class="page-head">
+        <div>
+          <h1>Locked Monitor</h1>
+          <p class="meta">Enter password to view status for <strong><%= monitor.name %></strong>.</p>
+        </div>
+      </div>
+      <% if (error) { %><p class="meta" style="color:#ff6b6b;"><%= error %></p><% } %>
+      <form method="post" action="/status/<%= monitor.slug %>/unlock" class="form">
+        <label>Password <input type="password" name="password" required></label>
+        <div class="action-row">
+          <button type="submit">Unlock</button>
+        </div>
+      </form>
+    </section>
+  </main>
+  <%- include('partials/footer') %>
+</body>
+</html>

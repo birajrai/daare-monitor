@@ -2,6 +2,7 @@ const db = require('./database');
 const settings = require('./settings');
 const scheduler = require('./scheduler');
 const queries = require('../queries/monitor-queries');
+const crypto = require('crypto');
 const { formatMonitorRows, formatMonitorRow } = require('../utils/monitor-view');
 const {
   sanitizeSlug,
@@ -30,6 +31,8 @@ async function parseMonitorPayload(payload, options = {}) {
   const monitorType = sanitizeMonitorType(payload.monitor_type);
   const url = String(payload.url || '').trim();
   const hideUrl = payload.hide_url === 'on';
+  const lockEnabled = payload.lock_enabled === 'on';
+  const lockPassword = String(payload.lock_password || '');
   const oldSlug = options.requireOldSlug ? sanitizeSlug(payload.old_slug) : null;
 
   if (
@@ -52,8 +55,15 @@ async function parseMonitorPayload(payload, options = {}) {
     monitorType,
     url,
     hideUrl,
+    lockEnabled,
+    lockPassword,
     intervalMs: interval.intervalMs,
   };
+}
+
+function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
+  const hash = crypto.scryptSync(String(password), salt, 64).toString('hex');
+  return `scrypt:${salt}:${hash}`;
 }
 
 async function listMonitors() {
@@ -71,15 +81,20 @@ async function getMonitorForEdit(slug) {
 async function createMonitor(payload) {
   const parsed = await parseMonitorPayload(payload);
   if (parsed.error) return parsed;
+  if (parsed.lockEnabled && parsed.lockPassword.length < 4) {
+    return { error: 'Lock password must be at least 4 characters' };
+  }
 
   const existing = await db.get('SELECT slug FROM monitors WHERE slug = ?', [parsed.slug]);
   if (existing) return { error: 'Slug already exists' };
 
-  await db.run('INSERT INTO monitors (name, slug, url, hide_url, monitor_type, interval) VALUES (?, ?, ?, ?, ?, ?)', [
+  await db.run('INSERT INTO monitors (name, slug, url, hide_url, lock_enabled, lock_password_hash, monitor_type, interval) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
     parsed.name,
     parsed.slug,
     parsed.url,
     parsed.hideUrl,
+    parsed.lockEnabled,
+    parsed.lockEnabled ? hashPassword(parsed.lockPassword) : null,
     parsed.monitorType,
     parsed.intervalMs,
   ]);
@@ -95,6 +110,10 @@ async function editMonitor(payload) {
 
   const current = await db.get('SELECT slug FROM monitors WHERE slug = ?', [parsed.oldSlug]);
   if (!current) return { error: 'Monitor not found', status: 404 };
+  const currentMonitor = await db.get('SELECT lock_password_hash FROM monitors WHERE slug = ?', [parsed.oldSlug]);
+  if (parsed.lockEnabled && !parsed.lockPassword && !currentMonitor.lock_password_hash) {
+    return { error: 'Lock password required when enabling lock' };
+  }
 
   if (parsed.slug !== parsed.oldSlug) {
     const existing = await db.get('SELECT slug FROM monitors WHERE slug = ?', [parsed.slug]);
@@ -103,11 +122,17 @@ async function editMonitor(payload) {
 
   await db.run('BEGIN TRANSACTION');
   try {
-    await db.run('UPDATE monitors SET name = ?, slug = ?, url = ?, hide_url = ?, monitor_type = ?, interval = ? WHERE slug = ?', [
+    const nextLockPasswordHash = parsed.lockEnabled
+      ? (parsed.lockPassword ? hashPassword(parsed.lockPassword) : currentMonitor.lock_password_hash)
+      : null;
+
+    await db.run('UPDATE monitors SET name = ?, slug = ?, url = ?, hide_url = ?, lock_enabled = ?, lock_password_hash = ?, monitor_type = ?, interval = ? WHERE slug = ?', [
       parsed.name,
       parsed.slug,
       parsed.url,
       parsed.hideUrl,
+      parsed.lockEnabled,
+      nextLockPasswordHash,
       parsed.monitorType,
       parsed.intervalMs,
       parsed.oldSlug,

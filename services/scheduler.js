@@ -327,9 +327,14 @@ async function stop() {
     await checkResultsBuffer.flushToDb();
 }
 
+async function flushBufferedResults() {
+    await checkResultsBuffer.flushToDb();
+}
+
 module.exports = {
     start,
     stop,
     refreshMonitorNow,
     refreshAllNow,
+    flushBufferedResults,
 };

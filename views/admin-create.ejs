@@ -28,6 +28,8 @@
         </label>
         <label>Target<input required name="url" placeholder="https://example.com/health or host:port"></label>
         <label><input type="checkbox" name="hide_url"> Hide target URL on public status views</label>
+        <label><input type="checkbox" name="lock_enabled"> Enable password lock for public status page</label>
+        <label>Lock password <input type="password" name="lock_password" minlength="4" placeholder="Required if lock is enabled"></label>
         <label>Interval (seconds)<input required type="number" name="interval_seconds" min="10" max="3600" value="60"></label>
         <div class="action-row">
           <button type="submit">Create</button>
