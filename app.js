@@ -7,7 +7,6 @@ const { requestNonce } = require('./middleware/nonce');
 const { createSecurityMiddleware } = require('./middleware/security');
 const { createLimiter } = require('./middleware/rate-limit');
 const { errorHandler } = require('./middleware/error-handler');
-const { env } = require('process');
 
 const app = express();
 let server;
@@ -76,7 +75,7 @@ async function start() {
     await db.init();
     scheduler.start();
 
-    server = app.listen(process.env.PORT || config.server.port, config.server.host, () => {
+    server = app.listen(config.server.port, config.server.host, () => {
         console.log(`Server listening on http://${config.server.host}:${config.server.port}`);
     });
 }
