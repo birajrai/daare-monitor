@@ -26,8 +26,8 @@ async function checkMinecraft(target) {
     statusCode: res.status,
     details: {
       type: 'minecraft',
-      playersOnline: data.players && Number.isFinite(data.players.online) ? data.players.online : null,
-      playersMax: data.players && Number.isFinite(data.players.max) ? data.players.max : null,
+      playersOnline: data.players && Number.isFinite(Number(data.players.online)) ? Number(data.players.online) : null,
+      playersMax: data.players && Number.isFinite(Number(data.players.max)) ? Number(data.players.max) : null,
       version: data.version || null,
       motd: extractMotd(data),
     },
