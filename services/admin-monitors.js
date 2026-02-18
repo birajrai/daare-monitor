@@ -1,5 +1,6 @@
 const db = require('./database');
 const settings = require('./settings');
+const scheduler = require('./scheduler');
 const queries = require('../queries/monitor-queries');
 const { formatMonitorRows, formatMonitorRow } = require('../utils/monitor-view');
 const {
@@ -80,6 +81,8 @@ async function createMonitor(payload) {
     parsed.intervalMs,
   ]);
 
+  await scheduler.refreshMonitorNow(parsed.slug);
+
   return { ok: true };
 }
 
@@ -112,6 +115,7 @@ async function editMonitor(payload) {
     }
 
     await db.run('COMMIT');
+    await scheduler.refreshMonitorNow(parsed.slug);
     return { ok: true };
   } catch (err) {
     await db.run('ROLLBACK');

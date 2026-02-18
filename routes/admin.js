@@ -4,6 +4,7 @@ const { createLimiter } = require('../middleware/rate-limit');
 const adminMonitors = require('../services/admin-monitors');
 const statusPages = require('../services/status-pages');
 const settings = require('../services/settings');
+const scheduler = require('../services/scheduler');
 
 const router = express.Router();
 const adminLimiter = createLimiter('admin');
@@ -17,6 +18,15 @@ router.get('/', async (req, res, next) => {
     res.render('admin', { title: 'Admin', monitors });
   } catch (err) {
     next(err);
+  }
+});
+
+router.post('/refresh-all', async (req, res, next) => {
+  try {
+    await scheduler.refreshAllNow();
+    return res.redirect('/admin');
+  } catch (err) {
+    return next(err);
   }
 });
 
@@ -176,6 +186,16 @@ router.post('/:slug/edit', async (req, res, next) => {
       return res.status(400).send('Constraint violation');
     }
     next(err);
+  }
+});
+
+router.post('/:slug/refresh', async (req, res, next) => {
+  try {
+    const ok = await scheduler.refreshMonitorNow(req.params.slug);
+    if (!ok) return res.status(404).send('Monitor not found');
+    return res.redirect('/admin');
+  } catch (err) {
+    return next(err);
   }
 });
 

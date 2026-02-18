@@ -25,6 +25,21 @@ function randomJitter(maxMs) {
     return Math.floor(Math.random() * Math.max(1, maxMs));
 }
 
+function withTimeout(promise, timeoutMs) {
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Check timeout')), Math.max(1000, timeoutMs));
+        promise
+            .then((value) => {
+                clearTimeout(timer);
+                resolve(value);
+            })
+            .catch((err) => {
+                clearTimeout(timer);
+                reject(err);
+            });
+    });
+}
+
 function isPrivateIPv4(ip) {
     const parts = ip.split('.').map(part => Number(part));
     if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) return false;
@@ -175,7 +190,8 @@ async function checkMonitor(monitor) {
             if (blocked) throw new Error('Blocked private IP target');
         }
 
-        const result = await monitorChecks.runCheck(monitor);
+        const timeoutMs = Number(appSettings.monitoring.timeoutMs || 10000) + 2000;
+        const result = await withTimeout(monitorChecks.runCheck(monitor), timeoutMs);
         currentStatus = result.currentStatus;
         responseTime = result.responseTime;
         statusCode = result.statusCode;
@@ -280,6 +296,28 @@ function start() {
     }, BUFFER_FLUSH_INTERVAL_MS);
 }
 
+async function refreshMonitorNow(slug) {
+    await syncMonitorsFromDb();
+    const monitor = monitorQueue.get(String(slug || ''));
+    if (!monitor) return false;
+    monitor.nextRun = Date.now();
+    if (!runningSlugs.has(monitor.slug)) {
+        void checkMonitor(monitor);
+    }
+    return true;
+}
+
+async function refreshAllNow() {
+    await syncMonitorsFromDb();
+    const now = Date.now();
+    for (const monitor of monitorQueue.values()) {
+        monitor.nextRun = now;
+        if (!runningSlugs.has(monitor.slug)) {
+            void checkMonitor(monitor);
+        }
+    }
+}
+
 async function stop() {
     isRunning = false;
     if (loopTimer) clearTimeout(loopTimer);
@@ -292,4 +330,6 @@ async function stop() {
 module.exports = {
     start,
     stop,
+    refreshMonitorNow,
+    refreshAllNow,
 };
