@@ -1,40 +1,39 @@
-const sqlite3 = require('sqlite3');
-const fs = require('fs');
-const path = require('path');
+const { Client } = require('pg');
 const config = require('../config');
 
-let db;
+let client;
+
+function toPgPlaceholders(sql) {
+  let index = 0;
+  return sql.replace(/\?/g, () => {
+    index += 1;
+    return `$${index}`;
+  });
+}
 
 function run(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function onRun(err) {
-      if (err) return reject(err);
-      resolve({ lastID: this.lastID, changes: this.changes });
-    });
-  });
+  return client.query(toPgPlaceholders(sql), params).then((result) => ({
+    lastID: null,
+    changes: result.rowCount || 0,
+  }));
 }
 
 function get(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) return reject(err);
-      resolve(row || null);
-    });
-  });
+  return client.query(toPgPlaceholders(sql), params).then((result) => result.rows[0] || null);
 }
 
 function all(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) return reject(err);
-      resolve(rows || []);
-    });
-  });
+  return client.query(toPgPlaceholders(sql), params).then((result) => result.rows || []);
 }
 
 async function hasColumn(tableName, columnName) {
-  const columns = await all(`PRAGMA table_info(${tableName})`);
-  return columns.some((col) => col.name === columnName);
+  const row = await get(
+    `SELECT 1
+     FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = ? AND column_name = ?`,
+    [tableName, columnName]
+  );
+  return Boolean(row);
 }
 
 async function ensureColumn(tableName, columnName, definitionSql) {
@@ -44,26 +43,24 @@ async function ensureColumn(tableName, columnName, definitionSql) {
 }
 
 async function init() {
-  const dbDir = path.dirname(config.database.path);
-  if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
-
-  db = new sqlite3.Database(config.database.path);
-
-  await run('PRAGMA journal_mode=WAL;');
-  await run('PRAGMA foreign_keys=ON;');
-  await run('PRAGMA busy_timeout=5000;');
-  await run('PRAGMA synchronous=NORMAL;');
-  await run('PRAGMA temp_store=MEMORY;');
+  if (!config.database.uri) {
+    throw new Error('Missing DATABASE_URL in environment');
+  }
+  client = new Client({
+    connectionString: config.database.uri,
+  });
+  await client.connect();
+  await client.query('SELECT 1');
 
   await run(`
     CREATE TABLE IF NOT EXISTS monitors (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id BIGSERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       slug TEXT UNIQUE NOT NULL,
       url TEXT NOT NULL,
       monitor_type TEXT NOT NULL DEFAULT 'http',
       interval INTEGER NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
 
@@ -77,13 +74,13 @@ async function init() {
 
   await run(`
     CREATE TABLE IF NOT EXISTS monitors_status (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id BIGSERIAL PRIMARY KEY,
       slug TEXT NOT NULL,
       status TEXT NOT NULL CHECK (status IN ('UP', 'DOWN')),
       response_time INTEGER,
       status_code INTEGER,
       details_json TEXT,
-      checked_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      checked_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
 
@@ -98,7 +95,7 @@ async function init() {
     CREATE TABLE IF NOT EXISTS monitors_state (
       slug TEXT PRIMARY KEY,
       current_status TEXT NOT NULL,
-      last_checked DATETIME,
+      last_checked TIMESTAMPTZ,
       uptime_count INTEGER DEFAULT 0,
       downtime_count INTEGER DEFAULT 0
     )
@@ -106,11 +103,11 @@ async function init() {
 
   await run(`
     CREATE TABLE IF NOT EXISTS status_pages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id BIGSERIAL PRIMARY KEY,
       title TEXT NOT NULL,
       slug TEXT UNIQUE NOT NULL,
       description TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
 
@@ -130,10 +127,8 @@ async function init() {
 }
 
 function close() {
-  return new Promise((resolve, reject) => {
-    if (!db) return resolve();
-    db.close((err) => (err ? reject(err) : resolve()));
-  });
+  if (!client) return Promise.resolve();
+  return client.end();
 }
 
 module.exports = {

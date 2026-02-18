@@ -130,8 +130,8 @@ async function syncMonitorsFromDb() {
 }
 
 async function cleanupOldStatusRows() {
-    await db.run("DELETE FROM monitors_status WHERE checked_at < datetime('now', ?)", [
-        `-${config.monitoring.retentionDays} days`,
+    await db.run("DELETE FROM monitors_status WHERE checked_at < NOW() - (?::int * INTERVAL '1 day')", [
+        config.monitoring.retentionDays,
     ]);
 }
 

@@ -1,33 +1,36 @@
-const sqlite3 = require('sqlite3').verbose();
-const dbPath = './data/status.db';
+require('dotenv').config();
+const { Client } = require('pg');
 
-const db = new sqlite3.Database(dbPath, err => {
-    if (err) {
-        console.error('Failed to connect to the database:', err.message);
-        process.exit(1);
-    }
-});
-
-const addColumn = (columnName, columnType) => {
-    return new Promise((resolve, reject) => {
-        db.run(`ALTER TABLE monitors ADD COLUMN ${columnName} ${columnType};`, err => {
-            if (err && !err.message.includes('duplicate column name')) {
-                return reject(err);
-            }
-            resolve();
-        });
-    });
-};
+async function addMonitorTypeColumn(client) {
+    await client.query(`
+        ALTER TABLE monitors
+        ADD COLUMN IF NOT EXISTS monitor_type TEXT NOT NULL DEFAULT 'http'
+    `);
+    await client.query(`
+        UPDATE monitors
+        SET monitor_type = 'http'
+        WHERE monitor_type IS NULL OR monitor_type = ''
+    `);
+}
 
 (async () => {
-    try {
-        console.log('Adding monitor_type column...');
-        await addColumn('monitor_type', "TEXT NOT NULL DEFAULT 'http'");
+    const uri = process.env.DATABASE_URL;
+    if (!uri) {
+        console.error('Missing DATABASE_URL in environment.');
+        process.exit(1);
+    }
 
+    const client = new Client({ connectionString: uri });
+
+    try {
+        await client.connect();
+        console.log('Adding monitor_type column...');
+        await addMonitorTypeColumn(client);
         console.log('Database schema updated successfully.');
     } catch (err) {
         console.error('Failed to update database schema:', err.message);
+        process.exitCode = 1;
     } finally {
-        db.close();
+        await client.end();
     }
 })();

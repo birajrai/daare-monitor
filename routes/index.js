@@ -18,12 +18,12 @@ router.get('/', async (req, res, next) => {
 
     const trendRows = await db.all(
       `SELECT
-         strftime('%Y-%m-%d %H:%M', checked_at) AS bucket,
+         to_char(date_trunc('minute', checked_at), 'YYYY-MM-DD HH24:MI') AS bucket,
          SUM(CASE WHEN status = 'UP' THEN 1 ELSE 0 END) AS up_checks,
          SUM(CASE WHEN status = 'DOWN' THEN 1 ELSE 0 END) AS down_checks,
          COUNT(*) AS total_checks
        FROM monitors_status
-       WHERE checked_at >= datetime('now', '-24 hours')
+       WHERE checked_at >= NOW() - INTERVAL '24 hours'
        GROUP BY bucket
        ORDER BY bucket ASC`
     );
