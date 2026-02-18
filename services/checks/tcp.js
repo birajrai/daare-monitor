@@ -1,8 +1,9 @@
 const net = require('net');
-const config = require('../../config');
+const settings = require('../settings');
 
 function checkTcp(target) {
   return new Promise((resolve) => {
+    const appSettings = settings.getCachedSettings();
     const [host, portText] = String(target).split(':');
     const port = Number(portText);
     const start = Date.now();
@@ -31,7 +32,7 @@ function checkTcp(target) {
       });
     }
 
-    socket.setTimeout(config.monitoring.timeoutMs);
+    socket.setTimeout(appSettings.monitoring.timeoutMs);
     socket.on('connect', () => finish('UP'));
     socket.on('timeout', () => finish('DOWN'));
     socket.on('error', () => finish('DOWN'));

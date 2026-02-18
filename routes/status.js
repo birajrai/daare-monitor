@@ -1,7 +1,6 @@
 const express = require('express');
-const config = require('../config');
 const db = require('../services/database');
-const { basicAuth } = require('../utils/auth');
+const { requireAuth } = require('../middleware/auth');
 const { createLimiter } = require('../middleware/rate-limit');
 const { isValidSlug, parsePositiveInt } = require('../utils/validators');
 const { buildStatusViewData } = require('../utils/status-view');
@@ -9,7 +8,7 @@ const monitorQueries = require('../queries/monitor-queries');
 const statusQueries = require('../queries/status-queries');
 
 const router = express.Router();
-const statusLimiter = createLimiter(config.rateLimit.status);
+const statusLimiter = createLimiter('status');
 
 router.get('/:slug', async (req, res, next) => {
     try {
@@ -56,7 +55,7 @@ router.get('/:slug', async (req, res, next) => {
     }
 });
 
-router.use('/:slug', basicAuth);
+router.use('/:slug', requireAuth);
 router.use('/:slug', statusLimiter);
 
 router.delete('/:slug', async (req, res, next) => {

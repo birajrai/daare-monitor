@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<%- include('partials/head') %>
+<body>
+  <%- include('partials/topbar') %>
+  <main class="container">
+    <section class="card">
+      <h1>Admin Settings</h1>
+      <p class="meta">All runtime settings are managed here. Only `PORT` and `DATABASE_URL` stay in `.env`.</p>
+      <form method="post" action="/admin/settings" class="form">
+        <label><input type="checkbox" name="trust_proxy" <%= settings.server.trustProxy ? 'checked' : '' %>> Trust proxy</label>
+        <label>Monitoring timeout (ms) <input type="number" name="monitoring_timeout_ms" value="<%= settings.monitoring.timeoutMs %>" required></label>
+        <label>Max redirects <input type="number" name="monitoring_max_redirects" value="<%= settings.monitoring.maxRedirects %>" required></label>
+        <label>Max content length bytes <input type="number" name="monitoring_max_content_length_bytes" value="<%= settings.monitoring.maxContentLengthBytes %>" required></label>
+        <label>Scheduler tick (ms) <input type="number" name="monitoring_scheduler_tick_ms" value="<%= settings.monitoring.schedulerTickMs %>" required></label>
+        <label>Max concurrency <input type="number" name="monitoring_max_concurrency" value="<%= settings.monitoring.maxConcurrency %>" required></label>
+        <label>Min interval (ms) <input type="number" name="monitoring_min_interval_ms" value="<%= settings.monitoring.minIntervalMs %>" required></label>
+        <label>Max interval (ms) <input type="number" name="monitoring_max_interval_ms" value="<%= settings.monitoring.maxIntervalMs %>" required></label>
+        <label>Sync interval (ms) <input type="number" name="monitoring_sync_interval_ms" value="<%= settings.monitoring.syncIntervalMs %>" required></label>
+        <label>Startup jitter max (ms) <input type="number" name="monitoring_startup_jitter_max_ms" value="<%= settings.monitoring.startupJitterMaxMs %>" required></label>
+        <label>Retention days <input type="number" name="monitoring_retention_days" value="<%= settings.monitoring.retentionDays %>" required></label>
+        <label>Cleanup interval (ms) <input type="number" name="monitoring_cleanup_interval_ms" value="<%= settings.monitoring.cleanupIntervalMs %>" required></label>
+        <label><input type="checkbox" name="monitoring_block_private_ips" <%= settings.monitoring.blockPrivateIps ? 'checked' : '' %>> Block private IPs</label>
+        <label>Global rate window (ms) <input type="number" name="rate_global_window_ms" value="<%= settings.rateLimit.global.windowMs %>" required></label>
+        <label>Global rate max <input type="number" name="rate_global_max" value="<%= settings.rateLimit.global.max %>" required></label>
+        <label>Admin rate window (ms) <input type="number" name="rate_admin_window_ms" value="<%= settings.rateLimit.admin.windowMs %>" required></label>
+        <label>Admin rate max <input type="number" name="rate_admin_max" value="<%= settings.rateLimit.admin.max %>" required></label>
+        <label>Status rate window (ms) <input type="number" name="rate_status_window_ms" value="<%= settings.rateLimit.status.windowMs %>" required></label>
+        <label>Status rate max <input type="number" name="rate_status_max" value="<%= settings.rateLimit.status.max %>" required></label>
+        <label>Discord webhook URL <input name="notifications_discord_webhook_url" value="<%= settings.notifications.discordWebhookUrl %>"></label>
+        <label><input type="checkbox" name="notifications_email_enabled" <%= settings.notifications.email.enabled ? 'checked' : '' %>> Enable email alerts</label>
+        <label>Email host <input name="notifications_email_host" value="<%= settings.notifications.email.host %>"></label>
+        <label>Email port <input type="number" name="notifications_email_port" value="<%= settings.notifications.email.port %>"></label>
+        <label><input type="checkbox" name="notifications_email_secure" <%= settings.notifications.email.secure ? 'checked' : '' %>> Email secure</label>
+        <label>Email user <input name="notifications_email_user" value="<%= settings.notifications.email.user %>"></label>
+        <label>Email pass <input type="password" name="notifications_email_pass" value="<%= settings.notifications.email.pass %>"></label>
+        <label>Email from <input name="notifications_email_from" value="<%= settings.notifications.email.from %>"></label>
+        <label>Email to <input name="notifications_email_to" value="<%= settings.notifications.email.to %>"></label>
+        <button type="submit">Save Settings</button>
+      </form>
+    </section>
+  </main>
+  <%- include('partials/footer') %>
+</body>
+</html>

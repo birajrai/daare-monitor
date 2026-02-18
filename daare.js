@@ -1,41 +1,41 @@
+require('dotenv').config();
 const path = require('path');
 const express = require('express');
-const config = require('./config');
 const db = require('./services/database');
+const settings = require('./services/settings');
 const scheduler = require('./services/scheduler');
 const { requestNonce } = require('./middleware/nonce');
 const { createSecurityMiddleware } = require('./middleware/security');
 const { createLimiter } = require('./middleware/rate-limit');
+const { attachAuthUser } = require('./middleware/auth');
 const { errorHandler } = require('./middleware/error-handler');
 
 const app = express();
 let server;
 let shuttingDown = false;
 
-if (config.server.trustProxy) {
-    app.set('trust proxy', 1);
-}
-
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.disable('x-powered-by');
 
 app.use(requestNonce);
+app.use(attachAuthUser);
 app.use((req, res, next) => {
     res.locals.currentPath = req.path;
     next();
 });
-app.use(createSecurityMiddleware(config));
+app.use(createSecurityMiddleware());
 
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 app.use(express.json({ limit: '10kb' }));
 
-app.use(createLimiter(config.rateLimit.global));
+app.use(createLimiter('global'));
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/vendor/echarts', express.static(path.join(__dirname, 'node_modules', 'echarts', 'dist')));
 
 app.use('/', require('./routes/index'));
+app.use('/auth', require('./routes/auth'));
 app.use('/status', require('./routes/status'));
 app.use('/status-page', require('./routes/status-page'));
 app.use('/admin', require('./routes/admin'));
@@ -73,10 +73,16 @@ process.on('uncaughtException', err => {
 
 async function start() {
     await db.init();
+    const appSettings = await settings.getSettings(true);
+    if (appSettings.server && appSettings.server.trustProxy) {
+        app.set('trust proxy', 1);
+    }
     scheduler.start();
 
-    server = app.listen(config.server.port, config.server.host, () => {
-        console.log(`Server listening on http://${config.server.host}:${config.server.port}`);
+    const port = Number(process.env.PORT) || 3000;
+    const host = '0.0.0.0';
+    server = app.listen(port, host, () => {
+        console.log(`Server listening on http://${host}:${port}`);
     });
 }
 

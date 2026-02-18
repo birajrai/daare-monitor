@@ -1,14 +1,14 @@
 const axios = require('axios');
-const config = require('../../config');
-
-const httpClient = axios.create({
-  timeout: config.monitoring.timeoutMs,
-  maxRedirects: config.monitoring.maxRedirects,
-  maxContentLength: config.monitoring.maxContentLengthBytes,
-  validateStatus: () => true,
-});
+const settings = require('../settings');
 
 async function checkHttp(target) {
+  const appSettings = settings.getCachedSettings();
+  const httpClient = axios.create({
+    timeout: appSettings.monitoring.timeoutMs,
+    maxRedirects: appSettings.monitoring.maxRedirects,
+    maxContentLength: appSettings.monitoring.maxContentLengthBytes,
+    validateStatus: () => true,
+  });
   const start = Date.now();
   const res = await httpClient.get(target);
   return {

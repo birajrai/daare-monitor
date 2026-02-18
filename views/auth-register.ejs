@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<%- include('partials/head') %>
+<body>
+  <%- include('partials/topbar') %>
+  <main class="container">
+    <section class="card">
+      <h1>Create Admin User</h1>
+      <% if (error) { %><p class="meta" style="color:#ff6b6b;"><%= error %></p><% } %>
+      <form method="post" action="/auth/register" class="form">
+        <label>Username <input name="username" required></label>
+        <label>Password (min 8 chars) <input type="password" name="password" minlength="8" required></label>
+        <button type="submit">Create User</button>
+      </form>
+    </section>
+  </main>
+  <%- include('partials/footer') %>
+</body>
+</html>

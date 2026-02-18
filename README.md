@@ -1,14 +1,14 @@
 # daare-monitor
 
-## Security and rate-limit defaults
+## Runtime settings
 
-All operational settings are configured directly in `config.js`.
+Only `PORT` and `DATABASE_URL` are required in `.env`.
 
-For local safety, update at least:
+All other operational settings are managed in the app at `/admin/settings` after login.
 
-- `auth.username` and `auth.password`
-- `server.trustProxy` when running behind a reverse proxy
-- `rateLimit.global`, `rateLimit.admin`, and `rateLimit.status` as needed
+Auth flow:
+- If no user exists, create the first admin at `/auth/register`
+- After a user exists, login at `/auth/login`
 
 ## Monitor types
 

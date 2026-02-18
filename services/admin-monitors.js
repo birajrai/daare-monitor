@@ -1,5 +1,5 @@
-const config = require('../config');
 const db = require('./database');
+const settings = require('./settings');
 const queries = require('../queries/monitor-queries');
 const { formatMonitorRows, formatMonitorRow } = require('../utils/monitor-view');
 const {
@@ -10,19 +10,20 @@ const {
   isValidMonitorTarget,
 } = require('../utils/validators');
 
-function validateIntervalSeconds(inputSeconds) {
+async function validateIntervalSeconds(inputSeconds) {
   const intervalSeconds = Number(inputSeconds);
   if (!Number.isFinite(intervalSeconds)) return { error: 'Invalid monitor input' };
 
+  const appSettings = await settings.getSettings();
   const intervalMs = Math.floor(intervalSeconds * 1000);
-  if (intervalMs < config.monitoring.minIntervalMs || intervalMs > config.monitoring.maxIntervalMs) {
+  if (intervalMs < appSettings.monitoring.minIntervalMs || intervalMs > appSettings.monitoring.maxIntervalMs) {
     return { error: 'Interval must be between 10 seconds and 1 hour' };
   }
 
   return { intervalMs };
 }
 
-function parseMonitorPayload(payload, options = {}) {
+async function parseMonitorPayload(payload, options = {}) {
   const name = String(payload.name || '').trim();
   const slug = sanitizeSlug(payload.slug);
   const monitorType = sanitizeMonitorType(payload.monitor_type);
@@ -39,7 +40,7 @@ function parseMonitorPayload(payload, options = {}) {
     return { error: 'Invalid monitor input' };
   }
 
-  const interval = validateIntervalSeconds(payload.interval_seconds);
+  const interval = await validateIntervalSeconds(payload.interval_seconds);
   if (interval.error) return interval;
 
   return {
@@ -65,7 +66,7 @@ async function getMonitorForEdit(slug) {
 }
 
 async function createMonitor(payload) {
-  const parsed = parseMonitorPayload(payload);
+  const parsed = await parseMonitorPayload(payload);
   if (parsed.error) return parsed;
 
   const existing = await db.get('SELECT slug FROM monitors WHERE slug = ?', [parsed.slug]);
@@ -83,7 +84,7 @@ async function createMonitor(payload) {
 }
 
 async function editMonitor(payload) {
-  const parsed = parseMonitorPayload(payload, { requireOldSlug: true });
+  const parsed = await parseMonitorPayload(payload, { requireOldSlug: true });
   if (parsed.error) return parsed;
 
   const current = await db.get('SELECT slug FROM monitors WHERE slug = ?', [parsed.oldSlug]);

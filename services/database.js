@@ -1,5 +1,4 @@
 const { Client } = require('pg');
-const config = require('../config');
 
 let client;
 
@@ -43,11 +42,12 @@ async function ensureColumn(tableName, columnName, definitionSql) {
 }
 
 async function init() {
-  if (!config.database.uri) {
+  const databaseUrl = process.env.DATABASE_URL || '';
+  if (!databaseUrl) {
     throw new Error('Missing DATABASE_URL in environment');
   }
   client = new Client({
-    connectionString: config.database.uri,
+    connectionString: databaseUrl,
   });
   await client.connect();
   await client.query('SELECT 1');
@@ -123,6 +123,40 @@ async function init() {
   await run(`
     CREATE INDEX IF NOT EXISTS idx_status_page_monitors_page
     ON status_page_monitors(page_slug, order_index ASC)
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      id BOOLEAN PRIMARY KEY DEFAULT TRUE,
+      settings_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      CHECK (id = TRUE)
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id BIGSERIAL PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'admin',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS user_sessions (
+      id BIGSERIAL PRIMARY KEY,
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      session_token TEXT UNIQUE NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+
+  await run(`
+    CREATE INDEX IF NOT EXISTS idx_user_sessions_token
+    ON user_sessions(session_token)
   `);
 }
 

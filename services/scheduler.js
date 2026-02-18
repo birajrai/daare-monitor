@@ -1,7 +1,7 @@
 const dns = require('dns').promises;
 const net = require('net');
-const config = require('../config');
 const db = require('./database');
+const settings = require('./settings');
 const notifier = require('./notifier');
 const monitorChecks = require('./monitor-checks');
 
@@ -87,6 +87,7 @@ async function hostResolvesToPrivateAddress(hostname) {
 }
 
 async function syncMonitorsFromDb() {
+    const appSettings = settings.getCachedSettings();
     const rows = await db.all('SELECT id, name, slug, url, monitor_type, interval FROM monitors');
     const seen = new Set();
 
@@ -99,7 +100,7 @@ async function syncMonitorsFromDb() {
             monitorQueue.set(row.slug, {
                 ...row,
                 interval: intervalMs,
-                nextRun: Date.now() + randomJitter(Math.min(intervalMs, config.monitoring.startupJitterMaxMs)),
+                nextRun: Date.now() + randomJitter(Math.min(intervalMs, appSettings.monitoring.startupJitterMaxMs)),
             });
             continue;
         }
@@ -130,8 +131,9 @@ async function syncMonitorsFromDb() {
 }
 
 async function cleanupOldStatusRows() {
+    const appSettings = settings.getCachedSettings();
     await db.run("DELETE FROM monitors_status WHERE checked_at < NOW() - (?::int * INTERVAL '1 day')", [
-        config.monitoring.retentionDays,
+        appSettings.monitoring.retentionDays,
     ]);
 }
 
@@ -148,7 +150,8 @@ async function checkMonitor(monitor) {
     let detailsJson = null;
 
     try {
-        if (config.monitoring.blockPrivateIps) {
+        const appSettings = settings.getCachedSettings();
+        if (appSettings.monitoring.blockPrivateIps) {
             const hostname = extractHostname(monitor);
             if (!hostname) throw new Error('Invalid monitor target');
             const blocked = await hostResolvesToPrivateAddress(hostname);
@@ -215,22 +218,25 @@ async function checkMonitor(monitor) {
 
 async function schedulerTick() {
     if (!isRunning) return;
+    let tickMs = 500;
 
     try {
         const now = Date.now();
+        const appSettings = settings.getCachedSettings();
+        tickMs = appSettings.monitoring.schedulerTickMs;
 
-        if (now - lastSyncAt >= config.monitoring.syncIntervalMs) {
+        if (now - lastSyncAt >= appSettings.monitoring.syncIntervalMs) {
             await syncMonitorsFromDb();
             lastSyncAt = now;
         }
 
         if (now >= nextCleanupAt) {
             await cleanupOldStatusRows();
-            nextCleanupAt = now + config.monitoring.cleanupIntervalMs;
+            nextCleanupAt = now + appSettings.monitoring.cleanupIntervalMs;
         }
 
         for (const monitor of monitorQueue.values()) {
-            if (activeWorkers >= config.monitoring.maxConcurrency) break;
+            if (activeWorkers >= appSettings.monitoring.maxConcurrency) break;
             if (monitor.nextRun > now) continue;
             if (runningSlugs.has(monitor.slug)) continue;
 
@@ -240,7 +246,7 @@ async function schedulerTick() {
     } catch (err) {
         console.error('Scheduler tick failed:', err.message);
     } finally {
-        loopTimer = setTimeout(schedulerTick, config.monitoring.schedulerTickMs);
+        loopTimer = setTimeout(schedulerTick, tickMs);
     }
 }
 
@@ -248,7 +254,8 @@ function start() {
     if (isRunning) return;
     isRunning = true;
     lastSyncAt = 0;
-    loopTimer = setTimeout(schedulerTick, config.monitoring.schedulerTickMs);
+    const appSettings = settings.getCachedSettings();
+    loopTimer = setTimeout(schedulerTick, appSettings.monitoring.schedulerTickMs);
 }
 
 function stop() {

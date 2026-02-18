@@ -1,10 +1,5 @@
 const axios = require('axios');
-const config = require('../../config');
-
-const mcSrvStatClient = axios.create({
-  timeout: config.monitoring.timeoutMs,
-  validateStatus: () => true,
-});
+const settings = require('../settings');
 
 function extractMotd(data) {
   if (!data || !data.motd) return null;
@@ -15,6 +10,11 @@ function extractMotd(data) {
 }
 
 async function checkMinecraft(target) {
+  const appSettings = settings.getCachedSettings();
+  const mcSrvStatClient = axios.create({
+    timeout: appSettings.monitoring.timeoutMs,
+    validateStatus: () => true,
+  });
   const start = Date.now();
   const encodedTarget = encodeURIComponent(String(target));
   const res = await mcSrvStatClient.get(`https://api.mcsrvstat.us/2/${encodedTarget}`);

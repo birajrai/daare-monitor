@@ -1,6 +1,9 @@
 const helmet = require('helmet');
+const settings = require('../services/settings');
 
-function createSecurityMiddleware(config) {
+function createSecurityMiddleware() {
+  const appSettings = settings.getCachedSettings();
+  const trustProxy = Boolean(appSettings.server && appSettings.server.trustProxy);
   return helmet({
     contentSecurityPolicy: {
       useDefaults: true,
@@ -12,7 +15,7 @@ function createSecurityMiddleware(config) {
         "img-src": ["'self'", 'data:'],
       },
     },
-    hsts: config.server.trustProxy
+    hsts: trustProxy
       ? {
           maxAge: 31536000,
           includeSubDomains: true,
