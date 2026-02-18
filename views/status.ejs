@@ -29,7 +29,7 @@
     </section>
 
     <section class="card">
-      <h2>Latest Checks</h2>
+      <h2>Incidents</h2>
       <div class="table-wrap">
         <table>
           <thead>
@@ -41,10 +41,10 @@
             </tr>
           </thead>
           <tbody>
-            <% if (rows.length === 0) { %>
-              <tr><td colspan="4">No data yet.</td></tr>
+            <% if (limitedIncidents.length === 0) { %>
+              <tr><td colspan="4">No incidents recorded.</td></tr>
             <% } %>
-            <% rows.forEach((r) => { %>
+            <% limitedIncidents.forEach((r) => { %>
               <tr>
                 <td><%= r.checked_at %></td>
                 <td><span class="badge <%= r.status === 'UP' ? 'up' : 'down' %>"><%= r.status %></span></td>
@@ -56,12 +56,21 @@
         </table>
       </div>
     </section>
+
+    <section class="card">
+      <h2>Monitor Metadata</h2>
+      <ul class="meta-list">
+        <li><strong>Current Date:</strong> <%= new Date(metadata.currentDate).toLocaleString() %></li>
+        <li><strong>Last Update:</strong> <%= metadata.lastUpdate === 'Never' ? 'Never' : new Date(metadata.lastUpdate).toLocaleString() %></li>
+        <li><strong>Next Update:</strong> <%= metadata.nextUpdate === 'Unknown' ? 'Unknown' : new Date(metadata.nextUpdate).toLocaleString() %></li>
+      </ul>
+    </section>
   </main>
 
   <script nonce="<%= nonce %>">
     window.addEventListener('DOMContentLoaded', function () {
       var chart = echarts.init(document.getElementById('chart'), null, { renderer: 'canvas' });
-      var points = <%- JSON.stringify(points) %>;
+      var points = <%= JSON.stringify(points) %>;
       chart.setOption({
         backgroundColor: '#161b22',
         animation: false,
