@@ -6,8 +6,15 @@
 
   <main class="container">
     <section class="card">
-      <h1>Create Monitor</h1>
-      <p class="meta">Configure a new check target and interval.</p>
+      <div class="page-head row-between">
+        <div>
+          <h1>Create Monitor</h1>
+          <p class="meta">Configure a new check target and interval.</p>
+        </div>
+        <div class="action-row">
+          <a class="button-secondary" href="/admin">Back</a>
+        </div>
+      </div>
       <form method="post" action="/admin/create" class="form">
         <label>Name<input required name="name" maxlength="120"></label>
         <label>Slug<input required name="slug" pattern="[a-z0-9-]{1,100}" placeholder="example-api"></label>

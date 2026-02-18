@@ -4,17 +4,19 @@
 <body>
   <%- include('partials/topbar') %>
   <main class="container">
-    <section class="card">
-      <h1><%= hasUsers ? 'Login' : 'Create Admin User' %></h1>
+    <section class="card auth-card">
+      <div class="page-head">
+        <div>
+          <h1><%= hasUsers ? 'Welcome Back' : 'Create Admin Account' %></h1>
+          <p class="meta"><%= hasUsers ? 'Sign in to manage monitors and settings.' : 'This first account is automatically assigned admin access.' %></p>
+        </div>
+      </div>
       <% if (error) { %><p class="meta" style="color:#ff6b6b;"><%= error %></p><% } %>
       <form method="post" action="/auth" class="form">
         <label>Username <input name="username" required></label>
         <label>Password <input type="password" name="password" <%= hasUsers ? '' : 'minlength=\"8\"' %> required></label>
         <button type="submit"><%= hasUsers ? 'Login' : 'Create Admin User' %></button>
       </form>
-      <% if (!hasUsers) { %>
-        <p class="meta">First account will be created as admin.</p>
-      <% } %>
     </section>
   </main>
   <%- include('partials/footer') %>

@@ -6,8 +6,15 @@
 
   <main class="container">
     <section class="card">
-      <h1>Edit Monitor: <%= monitor.name %></h1>
-      <p class="meta">Update monitor configuration without losing history.</p>
+      <div class="page-head row-between">
+        <div>
+          <h1>Edit Monitor: <%= monitor.name %></h1>
+          <p class="meta">Update monitor configuration without losing history.</p>
+        </div>
+        <div class="action-row">
+          <a class="button-secondary" href="/admin">Back</a>
+        </div>
+      </div>
       <form method="post" action="/admin/<%= monitor.slug %>/edit" class="form">
         <label>Name<input required name="name" maxlength="120" value="<%= monitor.name %>"></label>
         <label>Slug<input required name="slug" pattern="[a-z0-9-]{1,100}" value="<%= monitor.slug %>"></label>

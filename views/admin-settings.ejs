@@ -5,10 +5,20 @@
   <%- include('partials/topbar') %>
   <main class="container">
     <section class="card">
-      <h1>Admin Settings</h1>
-      <p class="meta">All runtime settings are managed here. Only `PORT` and `DATABASE_URL` stay in `.env`.</p>
+      <div class="page-head row-between">
+        <div>
+          <h1>Settings</h1>
+          <p class="meta">All runtime settings are managed here. Only `PORT` and `DATABASE_URL` remain in `.env`.</p>
+        </div>
+        <div class="action-row">
+          <a class="button-secondary" href="/admin">Back to Monitors</a>
+        </div>
+      </div>
       <form method="post" action="/admin/settings" class="form">
+        <h2 class="section-title">Server</h2>
         <label><input type="checkbox" name="trust_proxy" <%= settings.server.trustProxy ? 'checked' : '' %>> Trust proxy</label>
+
+        <h2 class="section-title">Monitoring</h2>
         <label>Monitoring timeout (ms) <input type="number" name="monitoring_timeout_ms" value="<%= settings.monitoring.timeoutMs %>" required></label>
         <label>Max redirects <input type="number" name="monitoring_max_redirects" value="<%= settings.monitoring.maxRedirects %>" required></label>
         <label>Max content length bytes <input type="number" name="monitoring_max_content_length_bytes" value="<%= settings.monitoring.maxContentLengthBytes %>" required></label>
@@ -21,12 +31,16 @@
         <label>Retention days <input type="number" name="monitoring_retention_days" value="<%= settings.monitoring.retentionDays %>" required></label>
         <label>Cleanup interval (ms) <input type="number" name="monitoring_cleanup_interval_ms" value="<%= settings.monitoring.cleanupIntervalMs %>" required></label>
         <label><input type="checkbox" name="monitoring_block_private_ips" <%= settings.monitoring.blockPrivateIps ? 'checked' : '' %>> Block private IPs</label>
+
+        <h2 class="section-title">Rate Limits</h2>
         <label>Global rate window (ms) <input type="number" name="rate_global_window_ms" value="<%= settings.rateLimit.global.windowMs %>" required></label>
         <label>Global rate max <input type="number" name="rate_global_max" value="<%= settings.rateLimit.global.max %>" required></label>
         <label>Admin rate window (ms) <input type="number" name="rate_admin_window_ms" value="<%= settings.rateLimit.admin.windowMs %>" required></label>
         <label>Admin rate max <input type="number" name="rate_admin_max" value="<%= settings.rateLimit.admin.max %>" required></label>
         <label>Status rate window (ms) <input type="number" name="rate_status_window_ms" value="<%= settings.rateLimit.status.windowMs %>" required></label>
         <label>Status rate max <input type="number" name="rate_status_max" value="<%= settings.rateLimit.status.max %>" required></label>
+
+        <h2 class="section-title">Notifications</h2>
         <label>Discord webhook URL <input name="notifications_discord_webhook_url" value="<%= settings.notifications.discordWebhookUrl %>"></label>
         <label><input type="checkbox" name="notifications_email_enabled" <%= settings.notifications.email.enabled ? 'checked' : '' %>> Enable email alerts</label>
         <label>Email host <input name="notifications_email_host" value="<%= settings.notifications.email.host %>"></label>
@@ -36,7 +50,9 @@
         <label>Email pass <input type="password" name="notifications_email_pass" value="<%= settings.notifications.email.pass %>"></label>
         <label>Email from <input name="notifications_email_from" value="<%= settings.notifications.email.from %>"></label>
         <label>Email to <input name="notifications_email_to" value="<%= settings.notifications.email.to %>"></label>
-        <button type="submit">Save Settings</button>
+        <div class="action-row">
+          <button type="submit">Save Settings</button>
+        </div>
       </form>
     </section>
   </main>

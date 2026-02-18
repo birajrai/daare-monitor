@@ -1,12 +1,26 @@
 <header class="topbar">
-  <div class="container row-between">
-    <a href="/" class="brand">Daare Monitor</a>
-    <nav class="nav">
-      <% if (currentUser) { %>
-        <a class="nav-link <%= currentPath === '/' ? 'active' : '' %>" href="/">Dashboard</a>
-      <% } else { %>
-        <a class="nav-link <%= currentPath.startsWith('/auth') ? 'active' : '' %>" href="/auth">Login</a>
-      <% } %>
-    </nav>
+  <div class="container topbar-inner">
+    <div class="nav-left">
+      <a href="/" class="brand"><span class="brand-dot"></span> Daare Monitor</a>
+      <nav class="nav">
+        <% if (currentUser) { %>
+          <a class="nav-link <%= currentPath === '/' ? 'active' : '' %>" href="/">Dashboard</a>
+          <a class="nav-link <%= currentPath === '/admin' || currentPath.startsWith('/admin/') && !currentPath.startsWith('/admin/pages') && !currentPath.startsWith('/admin/settings') ? 'active' : '' %>" href="/admin">Monitors</a>
+          <a class="nav-link <%= currentPath.startsWith('/admin/pages') || currentPath.startsWith('/status-page') ? 'active' : '' %>" href="/admin/pages">Status Pages</a>
+          <a class="nav-link <%= currentPath.startsWith('/admin/settings') ? 'active' : '' %>" href="/admin/settings">Settings</a>
+        <% } else { %>
+          <a class="nav-link <%= currentPath.startsWith('/auth') ? 'active' : '' %>" href="/auth">Login</a>
+        <% } %>
+      </nav>
+    </div>
+
+    <% if (currentUser) { %>
+      <div class="nav-right">
+        <span class="user-pill"><%= currentUser.username %></span>
+        <form method="post" action="/auth/logout">
+          <button type="submit" class="button-secondary">Logout</button>
+        </form>
+      </div>
+    <% } %>
   </div>
 </header>
