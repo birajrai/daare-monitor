@@ -58,7 +58,7 @@
     </section>
   </main>
 
-  <script>
+  <script nonce="<%= nonce %>">
     window.addEventListener('DOMContentLoaded', function () {
       var chart = echarts.init(document.getElementById('chart'), null, { renderer: 'canvas' });
       var points = <%- JSON.stringify(points) %>;
