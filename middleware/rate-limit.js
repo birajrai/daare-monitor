@@ -4,6 +4,8 @@ const buckets = new Map();
 
 function createLimiter(scope) {
   return (req, res, next) => {
+    if (process.env.NODE_ENV !== 'production') return next();
+
     const appSettings = settings.getCachedSettings();
     const opts = (((appSettings || {}).rateLimit || {})[scope]) || { windowMs: 60000, max: 120 };
 
