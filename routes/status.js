@@ -17,7 +17,10 @@ router.get('/:slug', async (req, res, next) => {
         if (!['asc', 'desc'].includes(sort)) return res.status(400).send('Invalid sort order');
 
         const monitor = await db.get(
-            'SELECT name, slug, url, last_checked_at, update_interval FROM monitors WHERE slug = ?',
+            `SELECT m.name, m.slug, m.url, m.interval AS update_interval, s.last_checked AS last_checked_at
+             FROM monitors m
+             LEFT JOIN monitors_state s ON s.slug = m.slug
+             WHERE m.slug = ?`,
             [slug],
         );
         if (!monitor) return res.status(404).send('Monitor not found');
@@ -43,13 +46,15 @@ router.get('/:slug', async (req, res, next) => {
             value: row.status === 'UP' ? 1 : 0,
         }));
 
-        console.log('Monitor:', monitor);
-        console.log('Points:', points);
-        console.log('Rows:', rows);
+        // removed debug logging
 
         const now = new Date();
-        const lastUpdate = monitor.last_checked_at ? new Date(monitor.last_checked_at) : null;
-        const nextUpdate = lastUpdate ? new Date(lastUpdate.getTime() + monitor.update_interval) : null;
+        const lastUpdate = monitor && monitor.last_checked_at ? new Date(monitor.last_checked_at) : null;
+        const intervalMs =
+            monitor && (monitor.update_interval || monitor.interval)
+                ? Number(monitor.update_interval || monitor.interval)
+                : null;
+        const nextUpdate = lastUpdate && intervalMs ? new Date(lastUpdate.getTime() + intervalMs) : null;
 
         const metadata = {
             currentDate: now.toISOString(),

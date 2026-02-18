@@ -24,19 +24,21 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(
-    helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', (req, res) => `'nonce-${res.locals.nonce}'`],
-                styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-                fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-                imgSrc: ["'self'", 'data:'],
-            },
-        },
-    }),
-);
+app.use(helmet());
+
+app.use((req, res, next) => {
+    const nonce = res.locals.nonce;
+    const csp = [
+        "default-src 'self'",
+        `script-src 'self' 'nonce-${nonce}'`,
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com",
+        "img-src 'self' data:",
+    ].join('; ');
+
+    res.setHeader('Content-Security-Policy', csp);
+    next();
+});
 
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 app.use(express.json({ limit: '10kb' }));

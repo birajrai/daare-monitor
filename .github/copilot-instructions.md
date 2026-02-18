@@ -1,44 +1,59 @@
-# Project Guidelines
+# Agent Guidelines for daare-monitor
+
+## Quick summary
+
+- Purpose: lightweight uptime monitor with an Express SSR dashboard.
+- Key files: app.js, config.js, routes/, services/, views/, public/, data/.
 
 ## Code Style
 
-- **Language**: JavaScript (Node.js)
-- **Formatting**: Follow the patterns in [routes/index.js](routes/index.js) and [services/database.js](services/database.js).
-- **Linting**: Use ESLint with the configuration specified in `package.json`.
+- Node/CommonJS project targeting Node >=20 (see [package.json](package.json)).
+- Keep modules small and synchronous-looking; use `async/await` when needed.
+- Templates: EJS files under `views/` (see [views/layout.ejs](views/layout.ejs)).
+- CSS/asset files live in `public/` (see `public/styles.css`).
 
 ## Architecture
 
-- **Major Components**:
-    - `routes/`: Defines API endpoints.
-    - `services/`: Contains business logic and utility functions.
-    - `views/`: EJS templates for rendering HTML.
-    - `public/`: Static assets like CSS and images.
-- **Data Flow**: Routes call services, which interact with the database or other external systems.
-- **Structure**: Modularized by feature (e.g., `admin`, `status`).
+- `app.js` is the Express entrypoint and registers routers from `routes/`.
+- Routes: `routes/index.js`, `routes/status.js`, `routes/admin.js` handle HTTP views and APIs.
+- Services: `services/database.js`, `services/notifier.js`, `services/scheduler.js` contain core logic and should be updated instead of putting heavy logic in route handlers.
+- Persistence: SQLite DB stored under `data/` (path configured in `config.js`).
 
-## Build and Test
+## Build & Run
 
-- **Install Dependencies**: `npm install`
-- **Run the Application**: `node app.js`
-- **Test**: No explicit test scripts found. Add tests in a `tests/` directory if needed.
+- Install: `npm install`.
+- Start: `npm start` (runs `node app.js`).
+- DB schema: run `node scripts/update_schema.js` to initialise or migrate the SQLite DB.
+- Runtime: run on Node >=20; prefer local testing on `http://localhost:3000` (configurable in `config.js`).
 
 ## Project Conventions
 
-- **Routing**: Use `routes/` to define endpoints. Example: [routes/admin.js](routes/admin.js).
-- **Services**: Encapsulate logic in `services/`. Example: [services/notifier.js](services/notifier.js).
-- **Views**: Use EJS templates in `views/`. Example: [views/layout.ejs](views/layout.ejs).
+- Configuration lives in `config.js`; avoid hard-coding secrets. Prefer injecting via environment variables and updating `config.js` only for local dev defaults.
+- Small, focused modules: prefer adding new helpers under `services/` and import them in routes.
+- Views use server-side rendering with EJS; keep presentation logic in templates and business logic in services.
+- Use `scripts/update_schema.js` for DB changes rather than ad-hoc SQL files.
 
 ## Integration Points
 
-- **Database**: Managed in [services/database.js](services/database.js).
-- **Scheduler**: Background tasks in [services/scheduler.js](services/scheduler.js).
-- **Notifier**: Notification logic in [services/notifier.js](services/notifier.js).
+- Email: `nodemailer` (see `services/notifier.js` and `config.js.notifications.email`).
+- Discord: webhook URL supported via `config.js.notifications.discordWebhookUrl`.
+- Storage: `sqlite3` DB at `data/status.db` (path configured in `config.js`).
 
-## Security
+## Security & Sensitive Data
 
-- **Sensitive Data**: Avoid hardcoding credentials. Use environment variables.
-- **Authentication**: Implement authentication in `routes/admin.js` if required.
+- `config.js` contains defaults; **do not** commit real credentials. Prefer environment variables for production secrets.
+- App includes `helmet` and uses rate-limiting (see `config.js.rateLimit`)—respect these patterns when adding endpoints.
 
----
+## When Making Changes
 
-Feel free to update this document as the project evolves.
+- Run `node scripts/update_schema.js` when DB schema changes.
+- Restart the server after editing `app.js` or router registration.
+- Keep new dependencies minimal; add to `package.json` and run `npm install`.
+
+## Where to Look First
+
+- Entrypoint: [app.js](app.js)
+- Config and defaults: [config.js](config.js)
+- DB and scheduler: [services/database.js](services/database.js), [services/scheduler.js](services/scheduler.js)
+
+If any section is unclear or you'd like more detail (tests, CI, or deployment notes), say which area to expand.
