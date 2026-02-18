@@ -15,6 +15,11 @@ async function checkHttp(target) {
     currentStatus: res.status < 400 ? 'UP' : 'DOWN',
     responseTime: Date.now() - start,
     statusCode: res.status,
+    details: {
+      type: 'http',
+      statusText: res.statusText || null,
+      contentType: res.headers['content-type'] || null,
+    },
   };
 }
 

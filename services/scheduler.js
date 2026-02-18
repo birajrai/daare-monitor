@@ -145,6 +145,7 @@ async function checkMonitor(monitor) {
     let currentStatus = 'DOWN';
     let responseTime = null;
     let statusCode = null;
+    let detailsJson = null;
 
     try {
         if (config.monitoring.blockPrivateIps) {
@@ -158,17 +159,20 @@ async function checkMonitor(monitor) {
         currentStatus = result.currentStatus;
         responseTime = result.responseTime;
         statusCode = result.statusCode;
+        detailsJson = result.details ? JSON.stringify(result.details) : null;
     } catch {
         currentStatus = 'DOWN';
         responseTime = Date.now() - start;
+        detailsJson = null;
     }
 
     try {
-        await db.run('INSERT INTO monitors_status (slug, status, response_time, status_code) VALUES (?, ?, ?, ?)', [
+        await db.run('INSERT INTO monitors_status (slug, status, response_time, status_code, details_json) VALUES (?, ?, ?, ?, ?)', [
             monitor.slug,
             currentStatus,
             responseTime,
             statusCode,
+            detailsJson,
         ]);
 
         const previousState = await db.get('SELECT * FROM monitors_state WHERE slug = ?', [monitor.slug]);

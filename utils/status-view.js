@@ -1,5 +1,20 @@
+function parseDetails(detailsJson) {
+  if (!detailsJson) return null;
+  if (typeof detailsJson === 'object') return detailsJson;
+  try {
+    return JSON.parse(String(detailsJson));
+  } catch {
+    return null;
+  }
+}
+
 function buildStatusViewData(monitor, rows) {
-  const chronologicalRows = [...rows].sort((a, b) => new Date(a.checked_at) - new Date(b.checked_at));
+  const rowsWithDetails = rows.map((row) => ({
+    ...row,
+    details: parseDetails(row.details_json),
+  }));
+
+  const chronologicalRows = [...rowsWithDetails].sort((a, b) => new Date(a.checked_at) - new Date(b.checked_at));
   const incidents = chronologicalRows.filter((row, index, arr) => {
     if (index === 0) return true;
     return row.status !== arr[index - 1].status;
@@ -16,7 +31,7 @@ function buildStatusViewData(monitor, rows) {
   const intervalMs = monitor && monitor.update_interval ? Number(monitor.update_interval) : null;
   const nextUpdate = lastUpdate && intervalMs ? new Date(lastUpdate.getTime() + intervalMs) : null;
 
-  const upCount = rows.filter((row) => row.status === 'UP').length;
+  const upCount = rowsWithDetails.filter((row) => row.status === 'UP').length;
 
   return {
     points,
@@ -26,8 +41,8 @@ function buildStatusViewData(monitor, rows) {
       nextUpdate: nextUpdate ? nextUpdate.toISOString() : 'Unknown',
     },
     limitedIncidents: incidents.reverse().slice(0, 10),
-    uptimePercent: rows.length > 0 ? ((upCount / rows.length) * 100).toFixed(2) : '0.00',
-    latest: rows[0] || null,
+    uptimePercent: rowsWithDetails.length > 0 ? ((upCount / rowsWithDetails.length) * 100).toFixed(2) : '0.00',
+    latest: rowsWithDetails[0] || null,
   };
 }
 

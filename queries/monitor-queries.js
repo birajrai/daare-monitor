@@ -21,7 +21,14 @@ const dashboardMonitors = `SELECT
     WHERE s.slug = m.slug
     ORDER BY s.checked_at DESC
     LIMIT 1
-  ) AS status_code
+  ) AS status_code,
+  (
+    SELECT s.details_json
+    FROM monitors_status s
+    WHERE s.slug = m.slug
+    ORDER BY s.checked_at DESC
+    LIMIT 1
+  ) AS details_json
 FROM monitors m
 LEFT JOIN monitors_state ms ON ms.slug = m.slug
 ORDER BY m.created_at DESC`;

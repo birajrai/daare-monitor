@@ -82,9 +82,12 @@ async function init() {
       status TEXT NOT NULL CHECK (status IN ('UP', 'DOWN')),
       response_time INTEGER,
       status_code INTEGER,
+      details_json TEXT,
       checked_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  await ensureColumn('monitors_status', 'details_json', 'TEXT');
 
   await run(`
     CREATE INDEX IF NOT EXISTS idx_slug_checked
@@ -99,6 +102,30 @@ async function init() {
       uptime_count INTEGER DEFAULT 0,
       downtime_count INTEGER DEFAULT 0
     )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS status_pages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      slug TEXT UNIQUE NOT NULL,
+      description TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS status_page_monitors (
+      page_slug TEXT NOT NULL,
+      monitor_slug TEXT NOT NULL,
+      order_index INTEGER DEFAULT 0,
+      PRIMARY KEY (page_slug, monitor_slug)
+    )
+  `);
+
+  await run(`
+    CREATE INDEX IF NOT EXISTS idx_status_page_monitors_page
+    ON status_page_monitors(page_slug, order_index ASC)
   `);
 }
 

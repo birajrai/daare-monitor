@@ -57,6 +57,29 @@ a:hover { text-decoration: underline; }
   margin-bottom: 16px;
 }
 
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  margin-bottom: 0;
+}
+
+.stat-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.stat-value {
+  margin: 6px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
 h1, h2 {
   margin: 0 0 14px;
   font-size: 20px;
@@ -185,6 +208,26 @@ button.danger {
   grid-template-columns: 1fr;
 }
 
+.check-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.check-item input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
 @media (max-width: 720px) {
   .topbar .row-between {
     flex-direction: column;
@@ -193,5 +236,9 @@ button.danger {
 
   th, td {
     font-size: 13px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 }

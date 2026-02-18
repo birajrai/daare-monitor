@@ -10,8 +10,13 @@ router.get('/', async (req, res, next) => {
     const monitors = await db.all(queries.dashboardMonitors);
 
     const rows = formatMonitorRows(monitors);
+    const stats = {
+      total: rows.length,
+      up: rows.filter((m) => m.current_status === 'UP').length,
+      down: rows.filter((m) => m.current_status === 'DOWN').length,
+    };
 
-    res.render('index', { title: 'Monitor Dashboard', monitors: rows });
+    res.render('index', { title: 'Monitor Dashboard', monitors: rows, stats });
   } catch (err) {
     next(err);
   }

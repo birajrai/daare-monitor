@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<%- include('partials/head') %>
+<body>
+  <%- include('partials/topbar') %>
+
+  <main class="container">
+    <section class="card">
+      <h1>Edit Status Page: <%= page.title %></h1>
+      <form method="post" action="/admin/pages/<%= page.slug %>/edit" class="form">
+        <label>Title<input required name="title" maxlength="120" value="<%= page.title %>"></label>
+        <label>Slug<input required name="slug" pattern="[a-z0-9-]{1,100}" value="<%= page.slug %>"></label>
+        <label>Description<input name="description" maxlength="255" value="<%= page.description || '' %>"></label>
+
+        <label>Monitors</label>
+        <div class="check-list">
+          <% if (monitors.length === 0) { %>
+            <p class="meta">No monitors available yet.</p>
+          <% } %>
+          <% monitors.forEach((m) => { %>
+            <label class="check-item"><input type="checkbox" name="monitor_slugs" value="<%= m.slug %>" <%= selectedMonitorSlugs.includes(m.slug) ? 'checked' : '' %>> <%= m.name %> (<%= m.slug %>)</label>
+          <% }) %>
+        </div>
+
+        <div class="action-row">
+          <button type="submit">Save Changes</button>
+          <a class="button-secondary" href="/admin/pages">Cancel</a>
+        </div>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

@@ -15,7 +15,12 @@ function checkPing(target) {
     function finish(currentStatus) {
       if (done) return;
       done = true;
-      resolve({ currentStatus, responseTime: Date.now() - start, statusCode: null });
+      resolve({
+        currentStatus,
+        responseTime: Date.now() - start,
+        statusCode: null,
+        details: { type: 'ping', target: String(target) },
+      });
     }
 
     proc.on('error', () => finish('DOWN'));

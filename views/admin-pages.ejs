@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<%- include('partials/head') %>
+<body>
+  <%- include('partials/topbar') %>
+
+  <main class="container">
+    <section class="card">
+      <div class="row-between">
+        <h1>Status Pages</h1>
+        <div class="action-row">
+          <a class="button-secondary" href="/admin">Back to Admin</a>
+          <a class="button-secondary" href="/admin/pages/create">Create Status Page</a>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Slug</th>
+              <th>Public URL</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (pages.length === 0) { %>
+              <tr><td colspan="4">No status pages created.</td></tr>
+            <% } %>
+            <% pages.forEach((p) => { %>
+              <tr>
+                <td><%= p.title %></td>
+                <td><%= p.slug %></td>
+                <td><a href="/status-page/<%= p.slug %>">/status-page/<%= p.slug %></a></td>
+                <td>
+                  <div class="action-row">
+                    <a class="button-secondary" href="/admin/pages/<%= p.slug %>/edit">Edit</a>
+                    <form method="post" action="/admin/pages/<%= p.slug %>/remove" onsubmit="return confirm('Remove this status page?')">
+                      <button type="submit" class="danger">Remove</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

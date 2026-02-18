@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<%- include('partials/head') %>
+<body>
+  <%- include('partials/topbar') %>
+
+  <main class="container">
+    <section class="card">
+      <h1>Create Monitor</h1>
+      <form method="post" action="/admin/create" class="form">
+        <label>Name<input required name="name" maxlength="120"></label>
+        <label>Slug<input required name="slug" pattern="[a-z0-9-]{1,100}" placeholder="example-api"></label>
+        <label>Type
+          <select name="monitor_type" required>
+            <option value="http">HTTP(S)</option>
+            <option value="tcp">TCP Port</option>
+            <option value="ping">Ping</option>
+            <option value="minecraft">Minecraft</option>
+          </select>
+        </label>
+        <label>Target<input required name="url" placeholder="https://example.com/health or host:port"></label>
+        <label>Interval (seconds)<input required type="number" name="interval_seconds" min="10" max="3600" value="60"></label>
+        <div class="action-row">
+          <button type="submit">Create</button>
+          <a class="button-secondary" href="/admin">Cancel</a>
+        </div>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

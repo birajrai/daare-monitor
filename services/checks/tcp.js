@@ -8,7 +8,12 @@ function checkTcp(target) {
     const start = Date.now();
 
     if (!host || !Number.isInteger(port) || port < 1 || port > 65535) {
-      return resolve({ currentStatus: 'DOWN', responseTime: Date.now() - start, statusCode: null });
+      return resolve({
+        currentStatus: 'DOWN',
+        responseTime: Date.now() - start,
+        statusCode: null,
+        details: { type: 'tcp', host: host || null, port: port || null, open: false },
+      });
     }
 
     const socket = net.createConnection({ host, port });
@@ -18,7 +23,12 @@ function checkTcp(target) {
       if (done) return;
       done = true;
       socket.destroy();
-      resolve({ currentStatus, responseTime: Date.now() - start, statusCode: null });
+      resolve({
+        currentStatus,
+        responseTime: Date.now() - start,
+        statusCode: null,
+        details: { type: 'tcp', host, port, open: currentStatus === 'UP' },
+      });
     }
 
     socket.setTimeout(config.monitoring.timeoutMs);

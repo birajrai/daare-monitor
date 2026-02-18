@@ -23,11 +23,12 @@
               <th>Status</th>
               <th>Code</th>
               <th>Response</th>
+              <th>Details</th>
             </tr>
           </thead>
           <tbody>
             <% if (limitedIncidents.length === 0) { %>
-              <tr><td colspan="4">No incidents recorded.</td></tr>
+              <tr><td colspan="5">No incidents recorded.</td></tr>
             <% } %>
             <% limitedIncidents.forEach((r) => { %>
               <tr>
@@ -35,6 +36,19 @@
                 <td><span class="badge <%= r.status === 'UP' ? 'up' : 'down' %>"><%= r.status %></span></td>
                 <td><%= r.status_code ?? 'N/A' %></td>
                 <td><%= r.response_time ?? 'N/A' %>ms</td>
+                <td>
+                  <% if (r.details && r.details.type === 'minecraft') { %>
+                    <%= (Number.isFinite(r.details.playersOnline) ? r.details.playersOnline : '?') %>/<%= (Number.isFinite(r.details.playersMax) ? r.details.playersMax : '?') %> players<%= r.details.version ? ` - ${r.details.version}` : '' %>
+                  <% } else if (r.details && r.details.type === 'tcp') { %>
+                    <%= r.details.open ? 'Port open' : 'Port closed' %>
+                  <% } else if (r.details && r.details.type === 'ping') { %>
+                    <%= r.details.target ? `Ping ${r.details.target}` : 'Ping check' %>
+                  <% } else if (r.details && r.details.type === 'http') { %>
+                    <%= r.details.statusText || 'HTTP check' %>
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </td>
               </tr>
             <% }) %>
           </tbody>
@@ -49,6 +63,10 @@
         <li><strong>Current Date:</strong> <%= new Date(metadata.currentDate).toLocaleString() %></li>
         <li><strong>Last Update:</strong> <%= metadata.lastUpdate === 'Never' ? 'Never' : new Date(metadata.lastUpdate).toLocaleString() %></li>
         <li><strong>Next Update:</strong> <%= metadata.nextUpdate === 'Unknown' ? 'Unknown' : new Date(metadata.nextUpdate).toLocaleString() %></li>
+        <% if (latest && latest.details && latest.details.type === 'minecraft') { %>
+          <li><strong>Players:</strong> <%= (Number.isFinite(latest.details.playersOnline) ? latest.details.playersOnline : '?') %>/<%= (Number.isFinite(latest.details.playersMax) ? latest.details.playersMax : '?') %></li>
+          <% if (latest.details.version) { %><li><strong>Version:</strong> <%= latest.details.version %></li><% } %>
+        <% } %>
       </ul>
     </section>
   </main>

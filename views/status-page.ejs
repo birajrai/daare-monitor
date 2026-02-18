@@ -5,6 +5,13 @@
   <%- include('partials/topbar') %>
 
   <main class="container">
+    <section class="card">
+      <h1><%= page.title %></h1>
+      <% if (page.description) { %>
+        <p class="meta"><%= page.description %></p>
+      <% } %>
+    </section>
+
     <section class="stats-grid">
       <article class="card stat-card">
         <p class="stat-label">Monitoring</p>
@@ -21,43 +28,33 @@
     </section>
 
     <section class="card">
-      <h1>Monitors</h1>
+      <h2>Services</h2>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Name</th>
               <th>Type</th>
-              <th>Target</th>
               <th>Status</th>
               <th>Uptime</th>
               <th>Response</th>
               <th>Details</th>
               <th>Last Checked</th>
-              <th>Interval</th>
             </tr>
           </thead>
           <tbody>
             <% if (monitors.length === 0) { %>
-              <tr>
-                <td colspan="9">No monitors configured.</td>
-              </tr>
+              <tr><td colspan="7">No monitors assigned to this status page.</td></tr>
             <% } %>
             <% monitors.forEach((m) => { %>
               <tr>
-                <td><a href="/status/<%= m.slug %>"><%= m.name %></a></td>
+                <td><%= m.name %></td>
                 <td><%= (m.monitor_type || 'http').toUpperCase() %></td>
-                <td class="url"><%= m.url %></td>
-                <td>
-                  <span class="badge <%= m.current_status === 'UP' ? 'up' : (m.current_status === 'DOWN' ? 'down' : 'unknown') %>">
-                    <%= m.current_status %>
-                  </span>
-                </td>
+                <td><span class="badge <%= m.current_status === 'UP' ? 'up' : (m.current_status === 'DOWN' ? 'down' : 'unknown') %>"><%= m.current_status %></span></td>
                 <td><%= m.uptimePercent %>%</td>
                 <td><%= m.response_time ?? 'N/A' %>ms</td>
                 <td><%= m.detailsSummary %></td>
                 <td><%= m.last_checked || 'Never' %></td>
-                <td><%= m.intervalSeconds %>s</td>
               </tr>
             <% }) %>
           </tbody>

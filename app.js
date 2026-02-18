@@ -33,6 +33,7 @@ app.use('/vendor/echarts', express.static(path.join(__dirname, 'node_modules', '
 
 app.use('/', require('./routes/index'));
 app.use('/status', require('./routes/status'));
+app.use('/status-page', require('./routes/status-page'));
 app.use('/admin', require('./routes/admin'));
 
 app.use(errorHandler);
