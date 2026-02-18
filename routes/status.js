@@ -41,9 +41,11 @@ router.get('/:slug', async (req, res, next) => {
         });
         const limitedIncidents = incidents.reverse().slice(0, 10);
 
-        const points = limitedIncidents.map(row => ({
+        const points = chronologicalRows.map(row => ({
             time: row.checked_at,
             value: row.status === 'UP' ? 1 : 0,
+            responseTime: row.response_time,
+            statusCode: row.status_code,
         }));
 
         // removed debug logging

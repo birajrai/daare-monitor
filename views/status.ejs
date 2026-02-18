@@ -52,21 +52,79 @@
     </section>
   </main>
 
+  <script src="/vendor/echarts/echarts.min.js"></script>
   <script nonce="<%= nonce %>">
     const points = <%- JSON.stringify(points) %>;
-    const chart = document.getElementById('chart');
+    const chartEl = document.getElementById('chart');
 
-    if (!points.length) {
-      chart.innerHTML = '<p class="empty-chart">No data yet. Wait for checks to run.</p>';
+    if (!points.length || typeof echarts === 'undefined') {
+      chartEl.innerHTML = '<p class="empty-chart">No data yet. Wait for checks to run.</p>';
     } else {
       const sorted = points.slice().sort((a, b) => new Date(a.time) - new Date(b.time));
-      const bars = sorted.map((point) => {
-        const cls = point.value === 1 ? 'up' : 'down';
-        const ts = new Date(point.time).toLocaleString();
-        return `<div class="bar ${cls}" title="${ts}"></div>`;
-      }).join('');
+      const labels = sorted.map((point) => new Date(point.time).toLocaleTimeString());
+      const statusSeries = sorted.map((point) => point.value);
+      const responseSeries = sorted.map((point) => point.responseTime ?? null);
+      const chart = echarts.init(chartEl);
 
-      chart.innerHTML = `<div class="bars">${bars}</div>`;
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { left: 40, right: 30, top: 30, bottom: 30 },
+        tooltip: {
+          trigger: 'axis',
+          valueFormatter: (value) => (value === null ? 'N/A' : value),
+        },
+        legend: {
+          data: ['Status', 'Response (ms)'],
+          textStyle: { color: '#8b949e' },
+          top: 0,
+        },
+        xAxis: {
+          type: 'category',
+          data: labels,
+          axisLabel: { color: '#8b949e', hideOverlap: true },
+          axisLine: { lineStyle: { color: '#30363d' } },
+        },
+        yAxis: [
+          {
+            type: 'value',
+            min: 0,
+            max: 1,
+            interval: 1,
+            axisLabel: {
+              color: '#8b949e',
+              formatter: (val) => (val === 1 ? 'UP' : 'DOWN'),
+            },
+            splitLine: { lineStyle: { color: '#30363d' } },
+          },
+          {
+            type: 'value',
+            axisLabel: { color: '#8b949e' },
+            splitLine: { show: false },
+          },
+        ],
+        series: [
+          {
+            name: 'Status',
+            type: 'line',
+            step: 'end',
+            yAxisIndex: 0,
+            data: statusSeries,
+            symbol: 'none',
+            lineStyle: { width: 2, color: '#00ff88' },
+          },
+          {
+            name: 'Response (ms)',
+            type: 'line',
+            smooth: true,
+            yAxisIndex: 1,
+            data: responseSeries,
+            symbol: 'none',
+            lineStyle: { width: 2, color: '#1f6feb' },
+          },
+        ],
+      });
+
+      window.addEventListener('resize', () => chart.resize());
     }
   </script>
 </body>

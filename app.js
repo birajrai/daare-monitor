@@ -53,6 +53,7 @@ app.use(
 );
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/vendor/echarts', express.static(path.join(__dirname, 'node_modules', 'echarts', 'dist')));
 
 app.use('/', require('./routes/index'));
 app.use('/status', require('./routes/status'));

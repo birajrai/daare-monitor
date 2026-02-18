@@ -17,6 +17,24 @@
       </form>
     </section>
 
+    <% if (editMonitor) { %>
+      <section class="card">
+        <h2>Edit Monitor: <%= editMonitor.name %></h2>
+        <form method="post" action="/admin" class="form">
+          <input type="hidden" name="action" value="edit">
+          <input type="hidden" name="old_slug" value="<%= editMonitor.slug %>">
+          <label>Name<input required name="name" maxlength="120" value="<%= editMonitor.name %>"></label>
+          <label>Slug<input required name="slug" pattern="[a-z0-9-]{1,100}" value="<%= editMonitor.slug %>"></label>
+          <label>URL<input required type="url" name="url" value="<%= editMonitor.url %>"></label>
+          <label>Interval (seconds)<input required type="number" name="interval_seconds" min="10" max="3600" value="<%= editMonitor.intervalSeconds %>"></label>
+          <div class="action-row">
+            <button type="submit">Save Changes</button>
+            <a class="button-secondary" href="/admin">Cancel</a>
+          </div>
+        </form>
+      </section>
+    <% } %>
+
     <section class="card">
       <h2>Existing Monitors</h2>
       <div class="table-wrap">
@@ -28,7 +46,7 @@
               <th>Status</th>
               <th>Uptime</th>
               <th>Last Checked</th>
-              <th></th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -43,11 +61,14 @@
                 <td><%= m.uptimePercent %>%</td>
                 <td><%= m.last_checked || 'Never' %></td>
                 <td>
-                  <form method="post" action="/admin" onsubmit="return confirm('Remove this monitor?')">
-                    <input type="hidden" name="action" value="remove">
-                    <input type="hidden" name="slug" value="<%= m.slug %>">
-                    <button type="submit" class="danger">Remove</button>
-                  </form>
+                  <div class="action-row">
+                    <a class="button-secondary" href="/admin?edit=<%= m.slug %>">Edit</a>
+                    <form method="post" action="/admin" onsubmit="return confirm('Remove this monitor?')">
+                      <input type="hidden" name="action" value="remove">
+                      <input type="hidden" name="slug" value="<%= m.slug %>">
+                      <button type="submit" class="danger">Remove</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             <% }) %>
