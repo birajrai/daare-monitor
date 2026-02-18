@@ -42,7 +42,7 @@ async function attachAuthUser(req, res, next) {
 }
 
 function requireAuth(req, res, next) {
-  if (!req.user) return res.redirect('/auth/login');
+  if (!req.user) return res.redirect('/auth');
   return next();
 }
 

@@ -7,8 +7,8 @@ Only `PORT` and `DATABASE_URL` are required in `.env`.
 All other operational settings are managed in the app at `/admin/settings` after login.
 
 Auth flow:
-- If no user exists, create the first admin at `/auth/register`
-- After a user exists, login at `/auth/login`
+- If no user exists, create the first admin at `/auth`
+- After a user exists, login at `/auth`
 
 ## Monitor types
 

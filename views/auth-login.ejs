@@ -5,14 +5,16 @@
   <%- include('partials/topbar') %>
   <main class="container">
     <section class="card">
-      <h1>Login</h1>
+      <h1><%= hasUsers ? 'Login' : 'Create Admin User' %></h1>
       <% if (error) { %><p class="meta" style="color:#ff6b6b;"><%= error %></p><% } %>
-      <form method="post" action="/auth/login" class="form">
+      <form method="post" action="/auth" class="form">
         <label>Username <input name="username" required></label>
-        <label>Password <input type="password" name="password" required></label>
-        <button type="submit">Login</button>
+        <label>Password <input type="password" name="password" <%= hasUsers ? '' : 'minlength=\"8\"' %> required></label>
+        <button type="submit"><%= hasUsers ? 'Login' : 'Create Admin User' %></button>
       </form>
-      <p class="meta">No user yet? <a href="/auth/register">Register first admin</a>.</p>
+      <% if (!hasUsers) { %>
+        <p class="meta">First account will be created as admin.</p>
+      <% } %>
     </section>
   </main>
   <%- include('partials/footer') %>
