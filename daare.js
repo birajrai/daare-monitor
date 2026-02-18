@@ -7,6 +7,7 @@ const scheduler = require('./services/scheduler');
 const { requestNonce } = require('./middleware/nonce');
 const { createSecurityMiddleware } = require('./middleware/security');
 const { createLimiter } = require('./middleware/rate-limit');
+const { createRouteCache } = require('./middleware/route-cache');
 const { attachAuthUser } = require('./middleware/auth');
 const { errorHandler } = require('./middleware/error-handler');
 
@@ -36,6 +37,7 @@ app.use((req, res, next) => {
     if (req.path.startsWith('/auth') || req.path === '/up') return next();
     return globalLimiter(req, res, next);
 });
+app.use(createRouteCache(60 * 1000));
 
 app.get('/up', (req, res) => {
     return res.status(200).json({ ok: true, status: 'UP', timestamp: new Date().toISOString() });
@@ -54,7 +56,7 @@ async function shutdown(signal) {
     shuttingDown = true;
     console.log(`${signal} received, shutting down...`);
 
-    scheduler.stop();
+    await scheduler.stop();
 
     if (server) {
         await new Promise(resolve => server.close(() => resolve()));

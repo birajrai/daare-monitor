@@ -19,9 +19,9 @@ const DEFAULTS = {
     blockPrivateIps: true,
   },
   rateLimit: {
-    global: { windowMs: 15 * 60 * 1000, max: 200 },
-    admin: { windowMs: 15 * 60 * 1000, max: 20 },
-    status: { windowMs: 60 * 1000, max: 120 },
+    global: { windowMs: 15 * 60 * 1000, max: 60 },
+    admin: { windowMs: 15 * 60 * 1000, max: 10 },
+    status: { windowMs: 60 * 1000, max: 30 },
   },
   notifications: {
     discordWebhookUrl: '',
