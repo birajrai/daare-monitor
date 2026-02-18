@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | Daare Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container row-between">
+      <a href="/" class="brand">DAARE MONITOR</a>
+      <nav class="nav">
+        <a href="/">Dashboard</a>
+        <a href="/admin">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h1><%= monitor.name %></h1>
+      <p class="meta"><%= monitor.url %></p>
+      <div id="chart" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Latest Checks</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Code</th>
+              <th>Response</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (rows.length === 0) { %>
+              <tr><td colspan="4">No data yet.</td></tr>
+            <% } %>
+            <% rows.forEach((r) => { %>
+              <tr>
+                <td><%= r.checked_at %></td>
+                <td><span class="badge <%= r.status === 'UP' ? 'up' : 'down' %>"><%= r.status %></span></td>
+                <td><%= r.status_code ?? 'N/A' %></td>
+                <td><%= r.response_time ?? 'N/A' %>ms</td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {
+      var chart = echarts.init(document.getElementById('chart'), null, { renderer: 'canvas' });
+      var points = <%- JSON.stringify(points) %>;
+      chart.setOption({
+        backgroundColor: '#161b22',
+        animation: false,
+        grid: { top: 25, left: 50, right: 20, bottom: 40 },
+        xAxis: {
+          type: 'category',
+          data: points.map(function (p) { return p.time; }),
+          axisLabel: { color: '#c9d1d9', hideOverlap: true },
+          axisLine: { lineStyle: { color: '#30363d' } }
+        },
+        yAxis: {
+          type: 'value',
+          min: 0,
+          max: 1,
+          interval: 1,
+          axisLabel: {
+            color: '#c9d1d9',
+            formatter: function (v) { return v === 1 ? 'UP' : 'DOWN'; }
+          },
+          axisLine: { lineStyle: { color: '#30363d' } },
+          splitLine: { lineStyle: { color: '#21262d' } }
+        },
+        series: [{
+          type: 'line',
+          step: 'end',
+          showSymbol: false,
+          data: points.map(function (p) { return p.value; }),
+          lineStyle: { width: 2, color: '#00ff88' }
+        }]
+      });
+      window.addEventListener('resize', function () { chart.resize(); });
+    });
+  </script>
+</body>
+</html>

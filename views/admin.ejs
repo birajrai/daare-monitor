@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | Daare Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container row-between">
+      <a href="/" class="brand">DAARE MONITOR</a>
+      <nav class="nav">
+        <a href="/">Dashboard</a>
+        <a href="/admin">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container admin-grid">
+    <section class="card">
+      <h1>Add Monitor</h1>
+      <form method="post" action="/admin" class="form">
+        <input type="hidden" name="action" value="add">
+        <label>Name<input required name="name" maxlength="120"></label>
+        <label>Slug<input required name="slug" pattern="[a-z0-9-]{1,100}" placeholder="example-api"></label>
+        <label>URL<input required type="url" name="url" placeholder="https://example.com/health"></label>
+        <label>Interval (seconds)<input required type="number" name="interval_seconds" min="10" max="3600" value="60"></label>
+        <button type="submit">Add Monitor</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Existing Monitors</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Slug</th>
+              <th>Status</th>
+              <th>Uptime</th>
+              <th>Last Checked</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (monitors.length === 0) { %>
+              <tr><td colspan="6">No monitors configured.</td></tr>
+            <% } %>
+            <% monitors.forEach((m) => { %>
+              <tr>
+                <td><%= m.name %></td>
+                <td><%= m.slug %></td>
+                <td><span class="badge <%= m.current_status === 'UP' ? 'up' : (m.current_status === 'DOWN' ? 'down' : 'unknown') %>"><%= m.current_status %></span></td>
+                <td><%= m.uptimePercent %>%</td>
+                <td><%= m.last_checked || 'Never' %></td>
+                <td>
+                  <form method="post" action="/admin" onsubmit="return confirm('Remove this monitor?')">
+                    <input type="hidden" name="action" value="remove">
+                    <input type="hidden" name="slug" value="<%= m.slug %>">
+                    <button type="submit" class="danger">Remove</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

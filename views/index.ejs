@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | Daare Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container row-between">
+      <a href="/" class="brand">DAARE MONITOR</a>
+      <nav class="nav">
+        <a href="/">Dashboard</a>
+        <a href="/admin">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h1>Monitors</h1>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>URL</th>
+              <th>Status</th>
+              <th>Uptime</th>
+              <th>Response</th>
+              <th>Last Checked</th>
+              <th>Interval</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (monitors.length === 0) { %>
+              <tr>
+                <td colspan="7">No monitors configured.</td>
+              </tr>
+            <% } %>
+            <% monitors.forEach((m) => { %>
+              <tr>
+                <td><a href="/status/<%= m.slug %>"><%= m.name %></a></td>
+                <td class="url"><%= m.url %></td>
+                <td>
+                  <span class="badge <%= m.current_status === 'UP' ? 'up' : (m.current_status === 'DOWN' ? 'down' : 'unknown') %>">
+                    <%= m.current_status %>
+                  </span>
+                </td>
+                <td><%= m.uptimePercent %>%</td>
+                <td><%= m.response_time ?? 'N/A' %>ms</td>
+                <td><%= m.last_checked || 'Never' %></td>
+                <td><%= m.intervalSeconds %>s</td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

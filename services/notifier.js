@@ -1,52 +1,66 @@
-// ==========================
-// File: services/notifier.js
-// ==========================
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 const config = require('../config');
 
-const axiosInstance = axios.create({
-    timeout: config.monitoring.requestTimeout,
-    maxRedirects: 5,
-    maxContentLength: 2 * 1024 * 1024,
-    validateStatus: () => true,
+const monitorHttp = axios.create({
+  timeout: config.monitoring.timeoutMs,
+  maxRedirects: config.monitoring.maxRedirects,
+  maxContentLength: config.monitoring.maxContentLengthBytes,
+  validateStatus: () => true,
 });
 
-const transporter = nodemailer.createTransport({
-    host: config.notifications.email.host,
-    port: config.notifications.email.port,
-    secure: config.notifications.email.secure,
-    auth: {
+const discordHttp = axios.create({ timeout: 5000, validateStatus: () => true });
+
+const transporter = config.notifications.email.enabled
+  ? nodemailer.createTransport({
+      host: config.notifications.email.host,
+      port: config.notifications.email.port,
+      secure: config.notifications.email.secure,
+      auth: {
         user: config.notifications.email.user,
         pass: config.notifications.email.pass,
-    },
-});
+      },
+    })
+  : null;
 
-async function sendDiscord(status, monitor) {
-    if (!config.notifications.discordWebhook) return;
+async function sendDiscordStateChange(monitor, status, responseTime) {
+  if (!config.notifications.discordWebhookUrl) return;
 
-    const content = `@everyone @here ${
-        status === 'DOWN' ? '🚨' : '✅'
-    } ${monitor.name} is ${status}\nURL: ${monitor.url}`;
+  const content = `@everyone @here [${status}] ${monitor.name}\nURL: ${monitor.url}\nResponse: ${responseTime ?? 'N/A'}ms\nTime: ${new Date().toISOString()}`;
 
-    await axios.post(config.notifications.discordWebhook, { content });
+  try {
+    await discordHttp.post(config.notifications.discordWebhookUrl, { content });
+  } catch (err) {
+    console.error('Discord notification failed:', err.message);
+  }
 }
 
-async function sendEmail(status, monitor, responseTime) {
-    if (!config.notifications.email.host) return;
+async function sendEmailStateChange(monitor, status, responseTime) {
+  if (!transporter) return;
 
+  const subject = `[${status}] ${monitor.name}`;
+  const text = [
+    `Monitor: ${monitor.name}`,
+    `URL: ${monitor.url}`,
+    `Status: ${status}`,
+    `Response Time: ${responseTime ?? 'N/A'}ms`,
+    `Timestamp: ${new Date().toISOString()}`,
+  ].join('\n');
+
+  try {
     await transporter.sendMail({
-        from: config.notifications.email.from,
-        to: config.notifications.email.to,
-        subject: `[${status}] ${monitor.name}`,
-        text: `
-Monitor: ${monitor.name}
-URL: ${monitor.url}
-Status: ${status}
-Response Time: ${responseTime || 'N/A'}ms
-Time: ${new Date().toISOString()}
-`,
+      from: config.notifications.email.from,
+      to: config.notifications.email.to,
+      subject,
+      text,
     });
+  } catch (err) {
+    console.error('Email notification failed:', err.message);
+  }
 }
 
-module.exports = { sendDiscord, sendEmail, axiosInstance };
+module.exports = {
+  monitorHttp,
+  sendDiscordStateChange,
+  sendEmailStateChange,
+};
