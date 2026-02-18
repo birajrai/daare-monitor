@@ -34,12 +34,12 @@ router.get('/:slug', async (req, res, next) => {
             [slug, parseInt(limit, 10)],
         );
 
-        const incidents = rows.filter((row, index, arr) => {
-            if (index === 0) return true; // Always include the first row
-            return row.status !== arr[index - 1].status; // Include only if status changes
+        const chronologicalRows = [...rows].sort((a, b) => new Date(a.checked_at) - new Date(b.checked_at));
+        const incidents = chronologicalRows.filter((row, index, arr) => {
+            if (index === 0) return true;
+            return row.status !== arr[index - 1].status;
         });
-
-        const limitedIncidents = incidents.slice(0, 10);
+        const limitedIncidents = incidents.reverse().slice(0, 10);
 
         const points = limitedIncidents.map(row => ({
             time: row.checked_at,
@@ -62,12 +62,18 @@ router.get('/:slug', async (req, res, next) => {
             nextUpdate: nextUpdate ? nextUpdate.toISOString() : 'Unknown',
         };
 
+        const upCount = rows.filter(row => row.status === 'UP').length;
+        const uptimePercent = rows.length > 0 ? ((upCount / rows.length) * 100).toFixed(2) : '0.00';
+        const latest = rows[0] || null;
+
         if (format === 'json') {
             return res.json({
                 monitor,
                 points,
                 rows,
                 metadata,
+                uptimePercent,
+                latest,
             });
         }
 
@@ -78,6 +84,8 @@ router.get('/:slug', async (req, res, next) => {
             rows,
             metadata,
             limitedIncidents,
+            uptimePercent,
+            latest,
             nonce: res.locals.nonce,
         });
     } catch (err) {
@@ -94,6 +102,7 @@ router.delete('/:slug', async (req, res, next) => {
         if (!monitor) return res.status(404).send('Monitor not found');
 
         await db.run('DELETE FROM monitors WHERE slug = ?', [slug]);
+        await db.run('DELETE FROM monitors_state WHERE slug = ?', [slug]);
         await db.run('DELETE FROM monitors_status WHERE slug = ?', [slug]);
 
         res.status(200).send('Monitor and its data deleted successfully');

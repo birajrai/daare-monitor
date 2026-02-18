@@ -143,6 +143,42 @@ button.danger {
   height: 360px;
   border: 1px solid var(--line);
   border-radius: 8px;
+  padding: 12px;
+}
+
+.bars {
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6px, 1fr));
+  gap: 3px;
+  align-items: end;
+}
+
+.bar {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.bar.up {
+  background: rgba(0, 255, 136, 0.7);
+}
+
+.bar.down {
+  background: rgba(255, 77, 79, 0.75);
+}
+
+.meta-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.meta-list li {
+  margin-bottom: 6px;
+}
+
+.empty-chart {
+  color: var(--muted);
+  margin: 0;
 }
 
 .admin-grid {

@@ -1,29 +1,14 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= title %> | Daare Monitor</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
-</head>
+<%- include('partials/head') %>
 <body>
-  <header class="topbar">
-    <div class="container row-between">
-      <a href="/" class="brand">DAARE MONITOR</a>
-      <nav class="nav">
-        <a href="/">Dashboard</a>
-        <a href="/admin">Admin</a>
-      </nav>
-    </div>
-  </header>
+  <%- include('partials/topbar') %>
 
   <main class="container">
     <section class="card">
       <h1><%= monitor.name %></h1>
       <p class="meta"><%= monitor.url %></p>
+      <p class="meta">Last <%= rows.length %> checks uptime: <strong><%= uptimePercent %>%</strong></p>
       <div id="chart" class="chart"></div>
     </section>
 
@@ -59,6 +44,7 @@
     <section class="card">
       <h2>Monitor Metadata</h2>
       <ul class="meta-list">
+        <li><strong>Current Status:</strong> <span class="badge <%= latest && latest.status === 'UP' ? 'up' : (latest && latest.status === 'DOWN' ? 'down' : 'unknown') %>"><%= latest ? latest.status : 'UNKNOWN' %></span></li>
         <li><strong>Current Date:</strong> <%= new Date(metadata.currentDate).toLocaleString() %></li>
         <li><strong>Last Update:</strong> <%= metadata.lastUpdate === 'Never' ? 'Never' : new Date(metadata.lastUpdate).toLocaleString() %></li>
         <li><strong>Next Update:</strong> <%= metadata.nextUpdate === 'Unknown' ? 'Unknown' : new Date(metadata.nextUpdate).toLocaleString() %></li>
@@ -66,6 +52,22 @@
     </section>
   </main>
 
-  
+  <script nonce="<%= nonce %>">
+    const points = <%- JSON.stringify(points) %>;
+    const chart = document.getElementById('chart');
+
+    if (!points.length) {
+      chart.innerHTML = '<p class="empty-chart">No data yet. Wait for checks to run.</p>';
+    } else {
+      const sorted = points.slice().sort((a, b) => new Date(a.time) - new Date(b.time));
+      const bars = sorted.map((point) => {
+        const cls = point.value === 1 ? 'up' : 'down';
+        const ts = new Date(point.time).toLocaleString();
+        return `<div class="bar ${cls}" title="${ts}"></div>`;
+      }).join('');
+
+      chart.innerHTML = `<div class="bars">${bars}</div>`;
+    }
+  </script>
 </body>
 </html>

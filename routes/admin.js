@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const config = require('../config');
 const db = require('../services/database');
+const { formatMonitorRows } = require('../utils/monitor-view');
 
 const router = express.Router();
 
@@ -65,16 +66,7 @@ router.get('/', async (req, res, next) => {
        ORDER BY m.created_at DESC`
     );
 
-    const rows = monitors.map((m) => {
-      const up = Number(m.uptime_count || 0);
-      const down = Number(m.downtime_count || 0);
-      const total = up + down;
-      return {
-        ...m,
-        intervalSeconds: Math.floor(Number(m.interval) / 1000),
-        uptimePercent: total > 0 ? ((up / total) * 100).toFixed(2) : '0.00',
-      };
-    });
+    const rows = formatMonitorRows(monitors);
 
     res.render('admin', { title: 'Admin', monitors: rows, error: null, success: null });
   } catch (err) {
@@ -120,6 +112,7 @@ router.post('/', async (req, res, next) => {
 
       await db.run('DELETE FROM monitors WHERE slug = ?', [slug]);
       await db.run('DELETE FROM monitors_state WHERE slug = ?', [slug]);
+      await db.run('DELETE FROM monitors_status WHERE slug = ?', [slug]);
       return res.redirect('/admin');
     }
 

@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../services/database');
+const { formatMonitorRows } = require('../utils/monitor-view');
 
 const router = express.Router();
 
@@ -31,19 +32,7 @@ router.get('/', async (req, res, next) => {
        ORDER BY m.created_at DESC`
     );
 
-    const rows = monitors.map((m) => {
-      const up = Number(m.uptime_count || 0);
-      const down = Number(m.downtime_count || 0);
-      const total = up + down;
-      const uptimePercent = total > 0 ? ((up / total) * 100).toFixed(2) : '0.00';
-
-      return {
-        ...m,
-        intervalSeconds: Math.floor(Number(m.interval) / 1000),
-        current_status: m.current_status || 'UNKNOWN',
-        uptimePercent,
-      };
-    });
+    const rows = formatMonitorRows(monitors);
 
     res.render('index', { title: 'Monitor Dashboard', monitors: rows });
   } catch (err) {
