@@ -259,6 +259,13 @@ input, select, button {
   font-family: inherit;
 }
 
+input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  vertical-align: middle;
+}
+
 input:focus, select:focus {
   outline: none;
   border-color: var(--accent);

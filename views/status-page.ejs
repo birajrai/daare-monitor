@@ -48,7 +48,7 @@
             <% } %>
             <% monitors.forEach((m) => { %>
               <tr>
-                <td><%= m.name %></td>
+                <td><a href="/status/<%= m.slug %>"><%= m.name %></a></td>
                 <td><%= (m.monitor_type || 'http').toUpperCase() %></td>
                 <td><span class="badge <%= m.current_status === 'UP' ? 'up' : (m.current_status === 'DOWN' ? 'down' : 'unknown') %>"><%= m.current_status %></span></td>
                 <td><%= m.uptimePercent %>%</td>

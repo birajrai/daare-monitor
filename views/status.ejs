@@ -8,7 +8,7 @@
     <section class="card">
       <h1><%= monitor.name %></h1>
       <p class="meta"><strong>Type:</strong> <%= (monitor.monitor_type || 'http').toUpperCase() %></p>
-      <p class="meta"><%= monitor.url %></p>
+      <p class="meta"><%= monitor.hide_url ? 'Target URL hidden' : monitor.url %></p>
       <p class="meta">Last <%= rows.length %> checks uptime: <strong><%= uptimePercent %>%</strong></p>
       <div id="chart" class="chart"></div>
     </section>

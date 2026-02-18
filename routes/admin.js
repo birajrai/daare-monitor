@@ -67,6 +67,7 @@ router.post('/settings', async (req, res, next) => {
       },
       notifications: {
         discordWebhookUrl: String(body.notifications_discord_webhook_url || '').trim(),
+        discordRoleMention: String(body.notifications_discord_role_mention || '').trim(),
         email: {
           enabled: body.notifications_email_enabled === 'on',
           host: String(body.notifications_email_host || '').trim(),

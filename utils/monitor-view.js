@@ -8,6 +8,28 @@ function parseDetails(detailsJson) {
   }
 }
 
+function formatTimeAgo(input) {
+  if (!input) return 'Never';
+  const ts = new Date(input).getTime();
+  if (!Number.isFinite(ts)) return 'Never';
+
+  const diffMs = Date.now() - ts;
+  if (diffMs < 0) return 'just now';
+
+  const sec = Math.floor(diffMs / 1000);
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 30) return `${day}d ago`;
+  const mon = Math.floor(day / 30);
+  if (mon < 12) return `${mon}mo ago`;
+  const yr = Math.floor(mon / 12);
+  return `${yr}y ago`;
+}
+
 function summarizeDetails(monitor) {
   const details = parseDetails(monitor.details_json);
   if (!details) return 'N/A';
@@ -54,6 +76,7 @@ function formatMonitorRow(monitor) {
     ...monitor,
     intervalSeconds: Math.floor(Number(monitor.interval) / 1000),
     current_status: monitor.current_status || 'UNKNOWN',
+    lastCheckedAgo: formatTimeAgo(monitor.last_checked),
     uptimePercent: total > 0 ? ((up / total) * 100).toFixed(2) : '0.00',
     details: parseDetails(monitor.details_json),
     detailsSummary: summarizeDetails(monitor),

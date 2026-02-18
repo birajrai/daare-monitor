@@ -42,6 +42,7 @@
 
         <h2 class="section-title">Notifications</h2>
         <label>Discord webhook URL <input name="notifications_discord_webhook_url" value="<%= settings.notifications.discordWebhookUrl %>"></label>
+        <label>Discord role mention (e.g. &lt;@&amp;123...&gt;) <input name="notifications_discord_role_mention" value="<%= settings.notifications.discordRoleMention || '' %>" placeholder="<@&1234567890>"></label>
         <label><input type="checkbox" name="notifications_email_enabled" <%= settings.notifications.email.enabled ? 'checked' : '' %>> Enable email alerts</label>
         <label>Email host <input name="notifications_email_host" value="<%= settings.notifications.email.host %>"></label>
         <label>Email port <input type="number" name="notifications_email_port" value="<%= settings.notifications.email.port %>"></label>

@@ -8,7 +8,8 @@ async function sendDiscordStateChange(monitor, status, responseTime) {
   const appSettings = settings.getCachedSettings();
   if (!appSettings.notifications.discordWebhookUrl) return;
 
-  const content = `@everyone @here [${status}] ${monitor.name}\nURL: ${monitor.url}\nResponse: ${responseTime ?? 'N/A'}ms\nTime: ${new Date().toISOString()}`;
+  const mention = String(appSettings.notifications.discordRoleMention || '').trim() || '@here';
+  const content = `${mention} [${status}] ${monitor.name}\nURL: ${monitor.url}\nResponse: ${responseTime ?? 'N/A'}ms\nTime: ${new Date().toISOString()}`;
 
   try {
     await discordHttp.post(appSettings.notifications.discordWebhookUrl, { content });
