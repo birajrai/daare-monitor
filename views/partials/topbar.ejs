@@ -2,13 +2,8 @@
   <div class="container row-between">
     <a href="/" class="brand">Daare Monitor</a>
     <nav class="nav">
-      <a class="nav-link <%= currentPath === '/' ? 'active' : '' %>" href="/">Dashboard</a>
       <% if (currentUser) { %>
-        <a class="nav-link <%= currentPath.startsWith('/admin/pages') || currentPath.startsWith('/status-page') ? 'active' : '' %>" href="/admin/pages">Status Pages</a>
-        <a class="nav-link <%= currentPath.startsWith('/admin') ? 'active' : '' %>" href="/admin">Admin</a>
-        <form method="post" action="/auth/logout" style="display:inline;">
-          <button class="nav-link" type="submit">Logout</button>
-        </form>
+        <a class="nav-link <%= currentPath === '/' ? 'active' : '' %>" href="/">Dashboard</a>
       <% } else { %>
         <a class="nav-link <%= currentPath.startsWith('/auth') ? 'active' : '' %>" href="/auth/login">Login</a>
       <% } %>

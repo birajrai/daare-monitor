@@ -29,10 +29,13 @@ app.use(createSecurityMiddleware());
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 app.use(express.json({ limit: '10kb' }));
 
-app.use(createLimiter('global'));
-
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/vendor/echarts', express.static(path.join(__dirname, 'node_modules', 'echarts', 'dist')));
+const globalLimiter = createLimiter('global');
+app.use((req, res, next) => {
+    if (req.path.startsWith('/auth')) return next();
+    return globalLimiter(req, res, next);
+});
 
 app.use('/', require('./routes/index'));
 app.use('/auth', require('./routes/auth'));
