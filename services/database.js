@@ -65,6 +65,7 @@ async function init() {
   `);
 
   await ensureColumn('monitors', 'monitor_type', "TEXT NOT NULL DEFAULT 'http'");
+  await ensureColumn('monitors', 'hide_url', 'BOOLEAN NOT NULL DEFAULT FALSE');
   await run("UPDATE monitors SET monitor_type = 'http' WHERE monitor_type IS NULL OR monitor_type = ''");
 
   await run(`

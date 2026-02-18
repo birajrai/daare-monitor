@@ -35,7 +35,7 @@ async function getPageWithMonitors(slug) {
 
   const monitors = await db.all(
     `SELECT
-      m.name, m.slug, m.url, m.monitor_type, m.interval,
+      m.name, m.slug, m.url, m.hide_url, m.monitor_type, m.interval,
       COALESCE(ms.current_status, 'UNKNOWN') AS current_status,
       ms.last_checked, ms.uptime_count, ms.downtime_count,
       (

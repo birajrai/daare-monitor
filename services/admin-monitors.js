@@ -29,6 +29,7 @@ async function parseMonitorPayload(payload, options = {}) {
   const slug = sanitizeSlug(payload.slug);
   const monitorType = sanitizeMonitorType(payload.monitor_type);
   const url = String(payload.url || '').trim();
+  const hideUrl = payload.hide_url === 'on';
   const oldSlug = options.requireOldSlug ? sanitizeSlug(payload.old_slug) : null;
 
   if (
@@ -50,6 +51,7 @@ async function parseMonitorPayload(payload, options = {}) {
     oldSlug,
     monitorType,
     url,
+    hideUrl,
     intervalMs: interval.intervalMs,
   };
 }
@@ -73,10 +75,11 @@ async function createMonitor(payload) {
   const existing = await db.get('SELECT slug FROM monitors WHERE slug = ?', [parsed.slug]);
   if (existing) return { error: 'Slug already exists' };
 
-  await db.run('INSERT INTO monitors (name, slug, url, monitor_type, interval) VALUES (?, ?, ?, ?, ?)', [
+  await db.run('INSERT INTO monitors (name, slug, url, hide_url, monitor_type, interval) VALUES (?, ?, ?, ?, ?, ?)', [
     parsed.name,
     parsed.slug,
     parsed.url,
+    parsed.hideUrl,
     parsed.monitorType,
     parsed.intervalMs,
   ]);
@@ -100,10 +103,11 @@ async function editMonitor(payload) {
 
   await db.run('BEGIN TRANSACTION');
   try {
-    await db.run('UPDATE monitors SET name = ?, slug = ?, url = ?, monitor_type = ?, interval = ? WHERE slug = ?', [
+    await db.run('UPDATE monitors SET name = ?, slug = ?, url = ?, hide_url = ?, monitor_type = ?, interval = ? WHERE slug = ?', [
       parsed.name,
       parsed.slug,
       parsed.url,
+      parsed.hideUrl,
       parsed.monitorType,
       parsed.intervalMs,
       parsed.oldSlug,

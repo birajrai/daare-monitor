@@ -25,6 +25,7 @@ const DEFAULTS = {
   },
   notifications: {
     discordWebhookUrl: '',
+    discordRoleMention: '',
     email: {
       enabled: false,
       host: 'smtp.example.com',
