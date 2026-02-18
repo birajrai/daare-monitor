@@ -8,7 +8,41 @@ function parseDetails(detailsJson) {
   }
 }
 
+function graphConfigForType(type) {
+  if (type === 'minecraft') {
+    return {
+      secondaryLabel: 'Players Online',
+      secondaryMin: 0,
+      valueFromRow: (row) => {
+        if (row.details && Number.isFinite(Number(row.details.playersOnline))) {
+          return Number(row.details.playersOnline);
+        }
+        if (row.status === 'DOWN') return 0;
+        return null;
+      },
+    };
+  }
+
+  if (type === 'http') {
+    return {
+      secondaryLabel: 'HTTP Code',
+      secondaryMin: null,
+      valueFromRow: (row) =>
+        Number.isFinite(Number(row.status_code)) ? Number(row.status_code) : null,
+    };
+  }
+
+  return {
+    secondaryLabel: 'Response (ms)',
+    secondaryMin: 0,
+    valueFromRow: (row) =>
+      Number.isFinite(Number(row.response_time)) ? Number(row.response_time) : null,
+  };
+}
+
 function buildStatusViewData(monitor, rows) {
+  const monitorType = String((monitor && monitor.monitor_type) || 'http');
+  const graphConfig = graphConfigForType(monitorType);
   const rowsWithDetails = rows.map((row) => ({
     ...row,
     details: parseDetails(row.details_json),
@@ -25,6 +59,7 @@ function buildStatusViewData(monitor, rows) {
     value: row.status === 'UP' ? 1 : 0,
     responseTime: row.response_time,
     statusCode: row.status_code,
+    secondaryValue: graphConfig.valueFromRow(row),
   }));
 
   const lastUpdate = monitor && monitor.last_checked_at ? new Date(monitor.last_checked_at) : null;
@@ -43,6 +78,10 @@ function buildStatusViewData(monitor, rows) {
     limitedIncidents: incidents.reverse().slice(0, 10),
     uptimePercent: rowsWithDetails.length > 0 ? ((upCount / rowsWithDetails.length) * 100).toFixed(2) : '0.00',
     latest: rowsWithDetails[0] || null,
+    graph: {
+      secondaryLabel: graphConfig.secondaryLabel,
+      secondaryMin: graphConfig.secondaryMin,
+    },
   };
 }
 

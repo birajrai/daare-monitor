@@ -25,7 +25,7 @@ router.get('/:slug', async (req, res, next) => {
         if (!monitor) return res.status(404).send('Monitor not found');
 
         const rows = await db.all(statusQueries.monitorStatusRows(sort), [slug, parsedLimit]);
-        const { points, metadata, limitedIncidents, uptimePercent, latest } = buildStatusViewData(monitor, rows);
+        const { points, metadata, limitedIncidents, uptimePercent, latest, graph } = buildStatusViewData(monitor, rows);
 
         if (format === 'json') {
             return res.json({
@@ -35,6 +35,7 @@ router.get('/:slug', async (req, res, next) => {
                 metadata,
                 uptimePercent,
                 latest,
+                graph,
             });
         }
 
@@ -47,6 +48,7 @@ router.get('/:slug', async (req, res, next) => {
             limitedIncidents,
             uptimePercent,
             latest,
+            graph,
             nonce: res.locals.nonce,
         });
     } catch (err) {

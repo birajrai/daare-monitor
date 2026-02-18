@@ -30,11 +30,16 @@ function summarizeDetails(monitor) {
   }
 
   if (details.type === 'ping') {
-    return details.target ? `Ping ${details.target}` : 'Ping check';
+    const latency = Number.isFinite(Number(monitor.response_time)) ? `${Number(monitor.response_time)}ms` : 'N/A';
+    return details.target ? `Latency ${latency}` : `Ping ${latency}`;
   }
 
   if (details.type === 'http') {
-    return details.statusText || 'HTTP check';
+    const code = Number.isFinite(Number(monitor.status_code)) ? Number(monitor.status_code) : null;
+    const text = details.statusText || '';
+    if (code && text) return `${code} ${text}`;
+    if (code) return String(code);
+    return text || 'HTTP check';
   }
 
   return 'N/A';
