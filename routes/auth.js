@@ -4,6 +4,11 @@ const { setSessionCookie, clearSessionCookie } = require('../middleware/auth');
 
 const router = express.Router();
 
+router.get('/login', (req, res) => res.redirect('/auth'));
+router.get('/register', (req, res) => res.redirect('/auth'));
+router.post('/login', (req, res) => res.redirect(307, '/auth'));
+router.post('/register', (req, res) => res.redirect(307, '/auth'));
+
 router.get('/', async (req, res, next) => {
   try {
     if (req.user) return res.redirect('/admin');
