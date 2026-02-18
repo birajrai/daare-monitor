@@ -39,8 +39,10 @@ async function init() {
   db = new sqlite3.Database(config.database.path);
 
   await run('PRAGMA journal_mode=WAL;');
+  await run('PRAGMA foreign_keys=ON;');
   await run('PRAGMA busy_timeout=5000;');
   await run('PRAGMA synchronous=NORMAL;');
+  await run('PRAGMA temp_store=MEMORY;');
 
   await run(`
     CREATE TABLE IF NOT EXISTS monitors (
@@ -51,6 +53,11 @@ async function init() {
       interval INTEGER NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
+  `);
+
+  await run(`
+    CREATE INDEX IF NOT EXISTS idx_monitors_created_at
+    ON monitors(created_at DESC)
   `);
 
   await run(`

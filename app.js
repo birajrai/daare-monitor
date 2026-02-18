@@ -1,11 +1,12 @@
 const path = require('path');
 const express = require('express');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const config = require('./config');
 const db = require('./services/database');
 const scheduler = require('./services/scheduler');
-const crypto = require('crypto');
+const { requestNonce } = require('./middleware/nonce');
+const { createSecurityMiddleware } = require('./middleware/security');
+const { createLimiter } = require('./middleware/rate-limit');
+const { errorHandler } = require('./middleware/error-handler');
 
 const app = express();
 let server;
@@ -17,40 +18,15 @@ if (config.server.trustProxy) {
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.disable('x-powered-by');
 
-// Middleware to generate a nonce for each request
-app.use((req, res, next) => {
-    res.locals.nonce = crypto.randomBytes(16).toString('base64');
-    next();
-});
-
-app.use(helmet());
-
-app.use((req, res, next) => {
-    const nonce = res.locals.nonce;
-    const csp = [
-        "default-src 'self'",
-        `script-src 'self' 'nonce-${nonce}'`,
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "font-src 'self' https://fonts.gstatic.com",
-        "img-src 'self' data:",
-    ].join('; ');
-
-    res.setHeader('Content-Security-Policy', csp);
-    next();
-});
+app.use(requestNonce);
+app.use(createSecurityMiddleware(config));
 
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 app.use(express.json({ limit: '10kb' }));
 
-app.use(
-    rateLimit({
-        windowMs: config.rateLimit.global.windowMs,
-        max: config.rateLimit.global.max,
-        standardHeaders: true,
-        legacyHeaders: false,
-    }),
-);
+app.use(createLimiter(config.rateLimit.global));
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/vendor/echarts', express.static(path.join(__dirname, 'node_modules', 'echarts', 'dist')));
@@ -59,11 +35,7 @@ app.use('/', require('./routes/index'));
 app.use('/status', require('./routes/status'));
 app.use('/admin', require('./routes/admin'));
 
-app.use((err, req, res, next) => {
-    console.error(err);
-    if (res.headersSent) return next(err);
-    res.status(500).send('Internal Server Error');
-});
+app.use(errorHandler);
 
 async function shutdown(signal) {
     if (shuttingDown) return;

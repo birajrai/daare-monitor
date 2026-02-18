@@ -1,70 +1,23 @@
 const express = require('express');
-const rateLimit = require('express-rate-limit');
 const config = require('../config');
 const db = require('../services/database');
 const { formatMonitorRows } = require('../utils/monitor-view');
+const { basicAuth } = require('../utils/auth');
+const { createLimiter } = require('../middleware/rate-limit');
+const { sanitizeSlug, isValidSlug, isValidMonitorUrl } = require('../utils/validators');
+const queries = require('../queries/monitor-queries');
 
 const router = express.Router();
 
-const adminLimiter = rateLimit({
-  windowMs: config.rateLimit.admin.windowMs,
-  max: config.rateLimit.admin.max,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const adminLimiter = createLimiter(config.rateLimit.admin);
 
 router.use(adminLimiter);
-
-function basicAuth(req, res, next) {
-  const header = req.headers.authorization || '';
-  const [scheme, encoded] = header.split(' ');
-
-  if (scheme !== 'Basic' || !encoded) {
-    res.set('WWW-Authenticate', 'Basic realm="Admin"');
-    return res.status(401).send('Authentication required');
-  }
-
-  const decoded = Buffer.from(encoded, 'base64').toString('utf8');
-  const separator = decoded.indexOf(':');
-  const username = separator >= 0 ? decoded.slice(0, separator) : '';
-  const password = separator >= 0 ? decoded.slice(separator + 1) : '';
-
-  if (username !== config.auth.username || password !== config.auth.password) {
-    return res.status(401).send('Invalid credentials');
-  }
-
-  return next();
-}
-
-function sanitizeSlug(input) {
-  return String(input || '').trim().toLowerCase();
-}
-
-function isValidSlug(slug) {
-  return /^[a-z0-9-]{1,100}$/.test(slug);
-}
-
-function isValidMonitorUrl(input) {
-  try {
-    const parsed = new URL(input);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
 
 router.use(basicAuth);
 
 router.get('/', async (req, res, next) => {
   try {
-    const monitors = await db.all(
-      `SELECT m.name, m.slug, m.url, m.interval,
-              COALESCE(s.current_status, 'UNKNOWN') AS current_status,
-              s.last_checked, s.uptime_count, s.downtime_count
-       FROM monitors m
-       LEFT JOIN monitors_state s ON s.slug = m.slug
-       ORDER BY m.created_at DESC`
-    );
+    const monitors = await db.all(queries.adminMonitors);
 
     const rows = formatMonitorRows(monitors);
     const editSlug = sanitizeSlug(req.query.edit);
